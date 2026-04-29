@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASHA Saheli — डिजिटल फील्ड डायरी | NHM</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #1a3a6b;
+  --navy-dark: #122c54;
+  --navy-light: #1e4480;
+  --saffron: #E87722;
+  --saffron-light: #fef0e4;
+  --india-green: #138808;
+  --bg: #F0F2F5;
+  --card: #FFFFFF;
+  --text: #1a1a1a;
+  --muted: #555555;
+  --border: #D0D7DE;
+  --risk-critical: #6B21A8;
+  --risk-high: #B91C1C;
+  --risk-medium: #C2410C;
+  --risk-low: #15803D;
+  --sidebar-w: 240px;
+  --topbar-h: 64px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Noto Sans', 'Noto Sans Devanagari', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  min-height: 100vh;
+}
+
+/* ─── LAYOUT SHELL ─── */
+.shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  grid-template-rows: auto 1fr;
+  min-height: 100vh;
+}
+
+/* ─── TOP GOVERNMENT BANNER ─── */
+.gov-banner {
+  grid-column: 1 / -1;
+  background: var(--navy-dark);
+  color: rgba(255,255,255,0.75);
+  font-size: 11.5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  gap: 12px;
+}
+.gov-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.gov-banner-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 11px;
+}
+.tricolor-inline {
+  display: flex;
+  height: 14px;
+  width: 3px;
+  border-radius: 1px;
+  overflow: hidden;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+.tricolor-inline span { flex: 1; }
+.tc-s { background: #FF9933; }
+.tc-w { background: #fff; }
+.tc-g { background: #138808; }
+
+.gov-skip-link { color: rgba(255,255,255,0.5); text-decoration: none; font-size: 10.5px; }
+
+/* ─── TOP HEADER BAR ─── */
+.topbar {
+  grid-column: 1 / -1;
+  background: var(--navy);
+  display: flex;
+  align-items: stretch;
+  border-bottom: 3px solid var(--saffron);
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+}
+
+.topbar-brand {
+  width: var(--sidebar-w);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px;
+  border-right: 1px solid rgba(255,255,255,0.1);
+  flex-shrink: 0;
+}
+
+.emblem {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+}
+
+.brand-text {}
+.brand-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+.brand-sub {
+  font-size: 10px;
+  color: rgba(255,255,255,0.65);
+  font-family: 'Noto Sans Devanagari', sans-serif;
+  white-space: nowrap;
+}
+
+.topbar-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  gap: 16px;
+}
+
+.topbar-worker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.worker-avatar {
+  width: 34px;
+  height: 34px;
+  background: var(--saffron);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  color: white;
+  flex-shrink: 0;
+}
+.worker-info {}
+.worker-name-text { font-size: 13px; font-weight: 600; color: white; }
+.worker-role { font-size: 11px; color: rgba(255,255,255,0.6); }
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sync-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.sync-badge.synced { background: #14532d; color: #BBF7D0; border: 1px solid #166534; }
+.sync-badge.offline { background: #7f1d1d; color: #FECACA; border: 1px solid #991b1b; }
+.sync-badge.syncing { background: #1e3a5f; color: #93C5FD; border: 1px solid #1d4ed8; }
+
+.topbar-date {
+  font-size: 12px;
+  color: rgba(255,255,255,0.55);
+  padding: 5px 12px;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 4px;
+}
+
+/* ─── OFFLINE BANNER ─── */
+.offline-banner {
+  grid-column: 1 / -1;
+  background: #FEF3C7;
+  border-bottom: 1px solid #F59E0B;
+  color: #92400E;
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 8px 24px;
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+.offline-banner.visible { display: flex; }
+
+/* ─── SIDEBAR ─── */
+.sidebar {
+  background: var(--navy-dark);
+  width: var(--sidebar-w);
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(255,255,255,0.08);
+  position: sticky;
+  top: calc(var(--topbar-h) + 27px);
+  height: calc(100vh - var(--topbar-h) - 27px);
+  overflow-y: auto;
+}
+
+.sidebar-section-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+  padding: 18px 20px 6px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 20px;
+  color: rgba(255,255,255,0.65);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  font-size: 13.5px;
+  font-weight: 500;
+  border-left: 3px solid transparent;
+  text-decoration: none;
+  font-family: inherit;
+  background: none;
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
+  width: 100%;
+  text-align: left;
+}
+.nav-item:hover { background: rgba(255,255,255,0.06); color: white; }
+.nav-item.active {
+  background: rgba(232,119,34,0.12);
+  color: white;
+  border-left-color: var(--saffron);
+}
+.nav-icon { font-size: 16px; flex-shrink: 0; }
+.nav-badge {
+  margin-left: auto;
+  background: var(--risk-high);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  min-width: 20px;
+  text-align: center;
+}
+.nav-badge.orange { background: var(--saffron); }
+.nav-badge.purple { background: var(--risk-critical); }
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 14px 20px 20px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  font-size: 10px;
+  color: rgba(255,255,255,0.35);
+  line-height: 1.7;
+}
+.sidebar-footer strong { color: rgba(255,255,255,0.55); }
+
+/* ─── MAIN CONTENT ─── */
+.main-content {
+  min-width: 0;
+  padding: 24px 28px 40px;
+  overflow-y: auto;
+}
+
+/* ─── PAGE HEADER ─── */
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 16px;
+}
+.page-title { font-size: 20px; font-weight: 700; color: var(--navy); line-height: 1.2; }
+.page-subtitle { font-size: 12px; color: var(--muted); margin-top: 2px; font-family: 'Noto Sans Devanagari', sans-serif; }
+.page-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+
+.btn {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  letter-spacing: 0.2px;
+  transition: opacity 0.15s, background 0.15s;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-navy { background: var(--navy); color: white; }
+.btn-navy:hover { background: var(--navy-dark); }
+.btn-saffron { background: var(--saffron); color: white; }
+.btn-saffron:hover { opacity: 0.9; }
+.btn-outline { background: transparent; border: 1.5px solid var(--navy); color: var(--navy); }
+.btn-outline:hover { background: var(--navy); color: white; }
+.btn-outline-sm {
+  font-size: 11.5px; padding: 5px 10px;
+  background: transparent; border: 1.5px solid var(--navy); color: var(--navy); border-radius: 4px; cursor: pointer; font-family: inherit; font-weight: 600; transition: all 0.12s;
+}
+.btn-outline-sm:hover { background: var(--navy); color: white; }
+.btn-sm-saffron {
+  font-size: 11.5px; padding: 5px 10px;
+  background: transparent; border: 1.5px solid var(--saffron); color: var(--saffron); border-radius: 4px; cursor: pointer; font-family: inherit; font-weight: 600;
+}
+
+/* ─── STAT GRID ─── */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 18px 20px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.stat-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.stat-icon-box.navy   { background: #EEF2FF; }
+.stat-icon-box.red    { background: #FEF2F2; }
+.stat-icon-box.orange { background: #FFF7ED; }
+.stat-icon-box.green  { background: #F0FDF4; }
+
+.stat-body {}
+.stat-num { font-size: 26px; font-weight: 700; line-height: 1; color: var(--navy); }
+.stat-num.red    { color: var(--risk-high); }
+.stat-num.orange { color: var(--risk-medium); }
+.stat-num.green  { color: var(--risk-low); }
+.stat-label { font-size: 12px; color: var(--muted); margin-top: 3px; font-weight: 500; }
+.stat-change { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+
+/* ─── TWO-COLUMN LAYOUT ─── */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 20px;
+  align-items: start;
+}
+
+/* ─── SECTION CARD ─── */
+.section-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.section-card-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #FAFBFC;
+}
+.section-card-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--navy);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-card-body { padding: 0; }
+
+/* ─── FILTER CHIPS ─── */
+.filter-row {
+  display: flex;
+  gap: 8px;
+  padding: 14px 18px 10px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+  background: #FAFBFC;
+}
+.chip {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 13px;
+  border-radius: 4px;
+  border: 1.5px solid var(--navy);
+  color: var(--navy);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.13s;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  letter-spacing: 0.2px;
+}
+.chip.active, .chip:hover { background: var(--navy); color: white; }
+.chip .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+
+/* ─── PATIENT TABLE ─── */
+.patient-table { width: 100%; border-collapse: collapse; }
+.patient-table thead tr { background: #F8F9FA; }
+.patient-table th {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--muted);
+  padding: 10px 18px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.patient-table td {
+  padding: 12px 18px;
+  border-bottom: 1px solid #F3F4F6;
+  vertical-align: middle;
+}
+.patient-table tbody tr { transition: background 0.1s; }
+.patient-table tbody tr:hover { background: #F8F9FB; }
+.patient-table tbody tr.hidden { display: none; }
+
+.pt-name { font-weight: 700; font-size: 13.5px; color: var(--text); }
+.pt-meta { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.pt-id   { font-size: 10px; color: #9CA3AF; margin-top: 1px; font-family: monospace; }
+
+.risk-bar-cell { min-width: 120px; }
+.risk-bar-track { height: 6px; background: #E5E7EB; border-radius: 2px; overflow: hidden; }
+.risk-bar-fill { height: 100%; border-radius: 2px; }
+.risk-bar-fill.critical { background: var(--risk-critical); }
+.risk-bar-fill.high     { background: var(--risk-high); }
+.risk-bar-fill.medium   { background: var(--risk-medium); }
+.risk-bar-fill.low      { background: var(--risk-low); }
+.risk-bar-score { font-size: 11px; font-weight: 700; color: var(--navy); margin-top: 3px; }
+
+.risk-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  display: inline-block;
+}
+.risk-badge.critical { background: #EDE9FE; color: var(--risk-critical); border: 1px solid #C4B5FD; }
+.risk-badge.high     { background: #FEE2E2; color: var(--risk-high);     border: 1px solid #FECACA; }
+.risk-badge.medium   { background: #FFF7ED; color: var(--risk-medium);   border: 1px solid #FED7AA; }
+.risk-badge.low      { background: #F0FDF4; color: var(--risk-low);      border: 1px solid #BBF7D0; }
+
+.action-cell { display: flex; gap: 6px; align-items: center; }
+
+/* ─── LEFT BORDER RISK ROW ─── */
+.patient-table tbody tr { border-left: 3px solid transparent; }
+.patient-table tbody tr.row-critical { border-left-color: var(--risk-critical); }
+.patient-table tbody tr.row-high     { border-left-color: var(--risk-high); }
+.patient-table tbody tr.row-medium   { border-left-color: var(--risk-medium); }
+.patient-table tbody tr.row-low      { border-left-color: var(--risk-low); }
+
+/* ─── RIGHT PANEL ─── */
+.right-col { display: flex; flex-direction: column; gap: 16px; }
+
+/* Alert cards in sidebar */
+.alert-card {
+  padding: 12px 16px;
+  border-left: 4px solid transparent;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+  cursor: pointer;
+}
+.alert-card:hover { background: #F8F9FB; }
+.alert-card:last-child { border-bottom: none; }
+.alert-card.critical { border-left-color: var(--risk-critical); }
+.alert-card.high     { border-left-color: var(--risk-high); }
+.alert-name { font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: space-between; }
+.alert-score { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.alert-flags { font-size: 11.5px; color: #374151; margin-top: 3px; line-height: 1.4; }
+
+/* Quick stats mini cards */
+.mini-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 14px;
+}
+.mini-stat {
+  background: #F8F9FA;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px 12px;
+  text-align: center;
+}
+.mini-stat-num { font-size: 20px; font-weight: 700; color: var(--navy); }
+.mini-stat-num.saffron { color: var(--saffron); }
+.mini-stat-label { font-size: 10.5px; color: var(--muted); margin-top: 2px; font-family: 'Noto Sans Devanagari', sans-serif; }
+
+/* Progress item */
+.progress-item { padding: 10px 16px; border-bottom: 1px solid #F3F4F6; }
+.progress-item:last-child { border-bottom: none; }
+.progress-label { display: flex; justify-content: space-between; font-size: 12px; font-weight: 500; margin-bottom: 5px; }
+.prog-track { height: 7px; background: #E5E7EB; border-radius: 3px; overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 3px; }
+
+/* ─── BOTTOM GOV FOOTER ─── */
+.gov-footer {
+  grid-column: 1 / -1;
+  background: var(--navy-dark);
+  color: rgba(255,255,255,0.45);
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 28px;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-top: 2px solid var(--saffron);
+}
+.gov-footer strong { color: rgba(255,255,255,0.7); }
+.gov-footer-links { display: flex; gap: 16px; }
+.gov-footer-links a { color: rgba(255,255,255,0.45); text-decoration: none; }
+.gov-footer-links a:hover { color: rgba(255,255,255,0.7); }
+
+/* Spinning sync */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 1s linear infinite; display: inline-block; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- GOV BANNER -->
+  <div class="gov-banner">
+    <div class="gov-banner-left">
+      <div class="tricolor-inline">
+        <span class="tc-s"></span>
+        <span class="tc-w"></span>
+        <span class="tc-g"></span>
+      </div>
+      <span>भारत सरकार | Government of India &nbsp;·&nbsp; राष्ट्रीय स्वास्थ्य मिशन | National Health Mission</span>
+    </div>
+    <div class="gov-banner-right">
+      <span>मंत्रालय: स्वास्थ्य एवं परिवार कल्याण | MoHFW</span>
+      <span style="color:rgba(255,255,255,0.2)">|</span>
+      <a href="#" class="gov-skip-link">Screen Reader Access</a>
+      <a href="#" class="gov-skip-link">हिन्दी</a>
+    </div>
+  </div>
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <!-- Ashoka Emblem -->
+      <svg class="emblem" viewBox="0 0 46 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="8" y="39" width="30" height="3" rx="1" fill="#E5C97E"/>
+        <circle cx="23" cy="21" r="13" fill="none" stroke="#E5C97E" stroke-width="1.4"/>
+        <circle cx="23" cy="21" r="4.5" fill="none" stroke="#E5C97E" stroke-width="1.2"/>
+        <circle cx="23" cy="21" r="1.5" fill="#E5C97E"/>
+        <g stroke="#E5C97E" stroke-width="0.75">
+          <line x1="23" y1="9" x2="23" y2="16.5" transform="rotate(0 23 21)"/>
+          <line x1="23" y1="9" x2="23" y2="16.5" transform="rotate(15 23 21)"/>
+          <line x1="23" y1="9" x2="23" y2="16.5" transform="rotate(30 23 21)"/>
+          <line x1="23" y1="9" x2="23" y2="16.5" transform="rotate(45 23 21)"/>
+          <line x1="23" y1="9" x2="23" y2="16.5" transform="rotate(60 23 21)"/>
+          <line x1="23" y1="9" x2="23" y2="16.5" transform="rotate(75 23 21)"/>
+          <line x1="23" y1="9" x2="23" y2="16.5" transform="rotate(90 23 21)"/>
+          <line x1="23" y1="9" x2="23" y2="16.5" transform="rotate(105 23 21)"/>
+          <line x1="23" y1="9" x2="23" y2="16.5" transform="rotate(120 23 21)"/>
+          <line x1="23" y1="9" x2="23" y2="16.5" transform="rotate(135 23 21)"/>
+          <line x1="23" y1="9" x2="23" y2="16.5" transform="rotate(150 23 21)"/>
+          <line x1="23" y1="9" x2="23" y2="16.5" transform="rotate(165 23 21)"/>
+          <line x1="23" y1="9" x2="23" y2="16.5" transform="rotate(180 23 21)"/>
+          <line x1="23" y1="9" x2="23" y2="16.5" transform="rotate(195 23 21)"/>
+          <line x1="23" y1="9" x2="23" y2="16.5" transform="rotate(210 23 21)"/>
+          <line x1="23" y1="9" x2="23" y2="16.5" transform="rotate(225 23 21)"/>
+          <line x1="23" y1="9" x2="23" y2="16.5" transform="rotate(240 23 21)"/>
+          <line x1="23" y1="9" x2="23" y2="16.5" transform="rotate(255 23 21)"/>
+          <line x1="23" y1="9" x2="23" y2="16.5" transform="rotate(270 23 21)"/>
+          <line x1="23" y1="9" x2="23" y2="16.5" transform="rotate(285 23 21)"/>
+          <line x1="23" y1="9" x2="23" y2="16.5" transform="rotate(300 23 21)"/>
+          <line x1="23" y1="9" x2="23" y2="16.5" transform="rotate(315 23 21)"/>
+          <line x1="23" y1="9" x2="23" y2="16.5" transform="rotate(330 23 21)"/>
+          <line x1="23" y1="9" x2="23" y2="16.5" transform="rotate(345 23 21)"/>
+        </g>
+        <ellipse cx="16.5" cy="35" rx="4" ry="2.2" fill="#E5C97E"/>
+        <ellipse cx="29.5" cy="35" rx="4" ry="2.2" fill="#E5C97E"/>
+        <circle cx="16" cy="32.5" r="2.5" fill="#E5C97E"/>
+        <circle cx="30" cy="32.5" r="2.5" fill="#E5C97E"/>
+      </svg>
+      <div class="brand-text">
+        <div class="brand-name">ASHA Saheli</div>
+        <div class="brand-sub">डिजिटल फील्ड डायरी</div>
+      </div>
+    </div>
+
+    <div class="topbar-main">
+      <div style="display:flex;align-items:center;gap:24px;">
+        <div style="font-size:12px;color:rgba(255,255,255,0.5);">
+          <span style="color:rgba(255,255,255,0.7);font-weight:600;">District:</span> Bhopal &nbsp;·&nbsp;
+          <span style="color:rgba(255,255,255,0.7);font-weight:600;">Block:</span> Berasia &nbsp;·&nbsp;
+          <span style="color:rgba(255,255,255,0.7);font-weight:600;">Village:</span> Rampur
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-date">29 Apr 2026 &nbsp;|&nbsp; मंगलवार</div>
+        <div class="sync-badge synced" id="sync-badge" onclick="doSync()" style="cursor:pointer;" title="Click to sync">
+          <span id="sync-icon">✓</span> <span id="sync-text">Synced</span>
+        </div>
+        <div class="topbar-worker">
+          <div class="worker-avatar">SD</div>
+          <div class="worker-info">
+            <div class="worker-name-text">Sunita Devi</div>
+            <div class="worker-role">ASHA ID: MP-BPL-0042</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- OFFLINE BANNER -->
+  <div class="offline-banner" id="offline-banner">
+    <span>⚠</span>
+    <span><strong>आप ऑफलाइन हैं — डेटा सेव हो रहा है</strong> &nbsp;|&nbsp; Working Offline — All data is being saved locally</span>
+  </div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section-label">मुख्य मेन्यू | Main</div>
+
+    <button class="nav-item active">
+      <span class="nav-icon">🏠</span> डैशबोर्ड | Home
+    </button>
+    <button class="nav-item" onclick="setNav(this)">
+      <span class="nav-icon">➕</span> नया मरीज़ | New Patient
+    </button>
+    <button class="nav-item" onclick="setNav(this)">
+      <span class="nav-icon">📋</span> विज़िट दर्ज | Log Visit
+    </button>
+    <button class="nav-item" onclick="setNav(this)">
+      <span class="nav-icon">👥</span> मरीज़ सूची | Patient List
+      <span class="nav-badge orange">6</span>
+    </button>
+
+    <div class="sidebar-section-label">जोखिम | Risk</div>
+    <button class="nav-item" onclick="setNav(this)">
+      <span class="nav-icon">🚨</span> अति-गंभीर | Critical
+      <span class="nav-badge purple">2</span>
+    </button>
+    <button class="nav-item" onclick="setNav(this)">
+      <span class="nav-icon">⚠️</span> उच्च जोखिम | High Risk
+      <span class="nav-badge">1</span>
+    </button>
+
+    <div class="sidebar-section-label">रिपोर्ट | Reports</div>
+    <button class="nav-item" onclick="setNav(this)">
+      <span class="nav-icon">💰</span> JSY प्रोत्साहन | Incentives
+    </button>
+    <button class="nav-item" onclick="setNav(this)">
+      <span class="nav-icon">📊</span> मासिक रिपोर्ट | Monthly
+    </button>
+    <button class="nav-item" onclick="setNav(this)">
+      <span class="nav-icon">🔄</span> डेटा सिंक | Sync Data
+    </button>
+
+    <div class="sidebar-footer">
+      <strong>NHM · MoHFW</strong><br>
+      Government of India<br>
+      Version 1.0.4 | Sub-centre: SC-BPL-004<br>
+      ASHA ID: MP-BPL-0042
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+
+    <!-- Page header -->
+    <div class="page-header">
+      <div>
+        <div class="page-title">डैशबोर्ड — आज का अवलोकन</div>
+        <div class="page-subtitle">Dashboard — Today's Overview &nbsp;·&nbsp; 29 April 2026</div>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-outline">📊 रिपोर्ट | Report</button>
+        <button class="btn btn-saffron">➕ नया मरीज़ | New Patient</button>
+        <button class="btn btn-navy">📋 Log Visit</button>
+      </div>
+    </div>
+
+    <!-- STAT CARDS -->
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-icon-box navy">👥</div>
+        <div class="stat-body">
+          <div class="stat-num">6</div>
+          <div class="stat-label">कुल मरीज़ | Total Patients</div>
+          <div class="stat-change">Sub-centre: SC-BPL-004</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon-box red">🚨</div>
+        <div class="stat-body">
+          <div class="stat-num red">3</div>
+          <div class="stat-label">उच्च जोखिम | High Risk</div>
+          <div class="stat-change">2 Critical · 1 High</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon-box orange">🔔</div>
+        <div class="stat-body">
+          <div class="stat-num orange">3</div>
+          <div class="stat-label">सक्रिय अलर्ट | Active Alerts</div>
+          <div class="stat-change">Action required today</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon-box green">💰</div>
+        <div class="stat-body">
+          <div class="stat-num" style="font-size:20px;padding-top:3px;">₹ 1,400</div>
+          <div class="stat-label">JSY लंबित | Pending</div>
+          <div class="stat-change">2 beneficiaries</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TWO COLUMN LAYOUT -->
+    <div class="two-col">
+
+      <!-- PATIENT TABLE -->
+      <div>
+        <div class="section-card">
+          <div class="section-card-header">
+            <div class="section-card-title">
+              👥 मरीज़ सूची | Patient List
+            </div>
+            <button class="btn btn-outline" style="font-size:12px;padding:5px 12px;">Export CSV</button>
+          </div>
+          <!-- Filters -->
+          <div class="filter-row">
+            <button class="chip active" data-filter="all" onclick="setFilter('all',this)">सभी | All</button>
+            <button class="chip" data-filter="critical" onclick="setFilter('critical',this)">
+              <span class="dot" style="background:var(--risk-critical)"></span> अति-गंभीर
+            </button>
+            <button class="chip" data-filter="high" onclick="setFilter('high',this)">
+              <span class="dot" style="background:var(--risk-high)"></span> उच्च जोखिम
+            </button>
+            <button class="chip" data-filter="maternal" onclick="setFilter('maternal',this)">मातृ | Maternal</button>
+            <button class="chip" data-filter="child" onclick="setFilter('child',this)">शिशु | Child</button>
+          </div>
+
+          <div class="section-card-body">
+            <table class="patient-table">
+              <thead>
+                <tr>
+                  <th>मरीज़ | Patient</th>
+                  <th>श्रेणी | Category</th>
+                  <th>जोखिम स्तर | Risk Level</th>
+                  <th>स्कोर | Score</th>
+                  <th>अगली विज़िट | Next Visit</th>
+                  <th>कार्रवाई | Action</th>
+                </tr>
+              </thead>
+              <tbody id="patient-tbody">
+
+                <tr class="row-critical" data-risk="critical" data-type="maternal">
+                  <td>
+                    <div class="pt-name">Meena Yadav</div>
+                    <div class="pt-meta">H.No. 12, Rampur · G2P1 · EDD: 08 Jun 2025</div>
+                    <div class="pt-id">ID: MP-BPL-0112 · SC-BPL-004</div>
+                  </td>
+                  <td><span style="font-size:12px;background:#EDE9FE;color:#6B21A8;padding:3px 8px;border-radius:3px;font-weight:600;">Maternal</span></td>
+                  <td><span class="risk-badge critical">अति-गंभीर</span></td>
+                  <td class="risk-bar-cell">
+                    <div class="risk-bar-track"><div class="risk-bar-fill critical" style="width:85%"></div></div>
+                    <div class="risk-bar-score">85 / 100</div>
+                  </td>
+                  <td style="font-size:12px;color:var(--risk-high);font-weight:600;">Today ⚠</td>
+                  <td>
+                    <div class="action-cell">
+                      <button class="btn-outline-sm">📋 Log</button>
+                      <button class="btn-outline-sm">📜 Hist</button>
+                      <button class="btn-sm-saffron">📞</button>
+                    </div>
+                  </td>
+                </tr>
+
+                <tr class="row-critical" data-risk="critical" data-type="child">
+                  <td>
+                    <div class="pt-name">Raju (M/8mo)</div>
+                    <div class="pt-meta">H.No. 3, Naya Tola · DOB: 28 Aug 2024</div>
+                    <div class="pt-id">ID: MP-BPL-0131 · SC-BPL-004 · MUAC: 108mm</div>
+                  </td>
+                  <td><span style="font-size:12px;background:#FFF7ED;color:#C2410C;padding:3px 8px;border-radius:3px;font-weight:600;">Child</span></td>
+                  <td><span class="risk-badge critical">अति-गंभीर</span></td>
+                  <td class="risk-bar-cell">
+                    <div class="risk-bar-track"><div class="risk-bar-fill critical" style="width:90%"></div></div>
+                    <div class="risk-bar-score">90 / 100</div>
+                  </td>
+                  <td style="font-size:12px;color:var(--risk-high);font-weight:600;">Today ⚠</td>
+                  <td>
+                    <div class="action-cell">
+                      <button class="btn-outline-sm">📋 Log</button>
+                      <button class="btn-outline-sm">📜 Hist</button>
+                      <button class="btn-sm-saffron">📞</button>
+                    </div>
+                  </td>
+                </tr>
+
+                <tr class="row-high" data-risk="high" data-type="maternal">
+                  <td>
+                    <div class="pt-name">Sita Kumari</div>
+                    <div class="pt-meta">H.No. 7, Khandwa Rd · G1P0 · EDD: 22 Aug 2025</div>
+                    <div class="pt-id">ID: MP-BPL-0119 · SC-BPL-004</div>
+                  </td>
+                  <td><span style="font-size:12px;background:#EDE9FE;color:#6B21A8;padding:3px 8px;border-radius:3px;font-weight:600;">Maternal</span></td>
+                  <td><span class="risk-badge high">उच्च जोखिम</span></td>
+                  <td class="risk-bar-cell">
+                    <div class="risk-bar-track"><div class="risk-bar-fill high" style="width:65%"></div></div>
+                    <div class="risk-bar-score">65 / 100</div>
+                  </td>
+                  <td style="font-size:12px;color:var(--risk-medium);font-weight:600;">Tomorrow</td>
+                  <td>
+                    <div class="action-cell">
+                      <button class="btn-outline-sm">📋 Log</button>
+                      <button class="btn-outline-sm">📜 Hist</button>
+                      <button class="btn-sm-saffron">📞</button>
+                    </div>
+                  </td>
+                </tr>
+
+                <tr class="row-medium" data-risk="medium" data-type="maternal">
+                  <td>
+                    <div class="pt-name">Aarti Bai</div>
+                    <div class="pt-meta">H.No. 15, Shivpur · G3P2 · EDD: 14 Oct 2025</div>
+                    <div class="pt-id">ID: MP-BPL-0140 · SC-BPL-004</div>
+                  </td>
+                  <td><span style="font-size:12px;background:#EDE9FE;color:#6B21A8;padding:3px 8px;border-radius:3px;font-weight:600;">Maternal</span></td>
+                  <td><span class="risk-badge medium">निगरानी</span></td>
+                  <td class="risk-bar-cell">
+                    <div class="risk-bar-track"><div class="risk-bar-fill medium" style="width:48%"></div></div>
+                    <div class="risk-bar-score">48 / 100</div>
+                  </td>
+                  <td style="font-size:12px;color:var(--muted);">5 May 2026</td>
+                  <td>
+                    <div class="action-cell">
+                      <button class="btn-outline-sm">📋 Log</button>
+                      <button class="btn-outline-sm">📜 Hist</button>
+                      <button class="btn-sm-saffron">📞</button>
+                    </div>
+                  </td>
+                </tr>
+
+                <tr class="row-low" data-risk="low" data-type="maternal">
+                  <td>
+                    <div class="pt-name">Radha Sharma</div>
+                    <div class="pt-meta">H.No. 9, Civil Lines · G1P0 · EDD: 30 Nov 2025</div>
+                    <div class="pt-id">ID: MP-BPL-0155 · SC-BPL-004</div>
+                  </td>
+                  <td><span style="font-size:12px;background:#EDE9FE;color:#6B21A8;padding:3px 8px;border-radius:3px;font-weight:600;">Maternal</span></td>
+                  <td><span class="risk-badge low">सामान्य</span></td>
+                  <td class="risk-bar-cell">
+                    <div class="risk-bar-track"><div class="risk-bar-fill low" style="width:22%"></div></div>
+                    <div class="risk-bar-score">22 / 100</div>
+                  </td>
+                  <td style="font-size:12px;color:var(--muted);">12 May 2026</td>
+                  <td>
+                    <div class="action-cell">
+                      <button class="btn-outline-sm">📋 Log</button>
+                      <button class="btn-outline-sm">📜 Hist</button>
+                      <button class="btn-sm-saffron">📞</button>
+                    </div>
+                  </td>
+                </tr>
+
+                <tr class="row-low" data-risk="low" data-type="child">
+                  <td>
+                    <div class="pt-name">Priya (F/14mo)</div>
+                    <div class="pt-meta">H.No. 21, Krishnapura · DOB: 03 Feb 2024 · Wt: 8.2kg</div>
+                    <div class="pt-id">ID: MP-BPL-0162 · SC-BPL-004</div>
+                  </td>
+                  <td><span style="font-size:12px;background:#FFF7ED;color:#C2410C;padding:3px 8px;border-radius:3px;font-weight:600;">Child</span></td>
+                  <td><span class="risk-badge low">सामान्य</span></td>
+                  <td class="risk-bar-cell">
+                    <div class="risk-bar-track"><div class="risk-bar-fill low" style="width:18%"></div></div>
+                    <div class="risk-bar-score">18 / 100</div>
+                  </td>
+                  <td style="font-size:12px;color:var(--muted);">20 May 2026</td>
+                  <td>
+                    <div class="action-cell">
+                      <button class="btn-outline-sm">📋 Log</button>
+                      <button class="btn-outline-sm">📜 Hist</button>
+                      <button class="btn-sm-saffron">📞</button>
+                    </div>
+                  </td>
+                </tr>
+
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div><!-- /left col -->
+
+      <!-- RIGHT COLUMN -->
+      <div class="right-col">
+
+        <!-- Active Alerts -->
+        <div class="section-card">
+          <div class="section-card-header">
+            <div class="section-card-title">🔴 सक्रिय अलर्ट | Active Alerts</div>
+            <span style="font-size:11px;background:#FEE2E2;color:#B91C1C;padding:2px 8px;border-radius:10px;font-weight:700;">3 Active</span>
+          </div>
+          <div>
+            <div class="alert-card critical">
+              <div class="alert-name">
+                Raju (M/8mo)
+                <span class="risk-badge critical" style="font-size:9px;">अति-गंभीर</span>
+              </div>
+              <div class="alert-score">Score 90/100 · SAM Case</div>
+              <div class="alert-flags">SAM: MUAC=108mm · Immediate referral needed</div>
+            </div>
+            <div class="alert-card critical">
+              <div class="alert-name">
+                Meena Yadav
+                <span class="risk-badge critical" style="font-size:9px;">अति-गंभीर</span>
+              </div>
+              <div class="alert-score">Score 85/100 · Maternal</div>
+              <div class="alert-flags">Severe anaemia · Pre-eclampsia range BP</div>
+            </div>
+            <div class="alert-card high">
+              <div class="alert-name">
+                Sita Kumari
+                <span class="risk-badge high" style="font-size:9px;">उच्च जोखिम</span>
+              </div>
+              <div class="alert-score">Score 65/100 · Maternal</div>
+              <div class="alert-flags">Pre-eclampsia BP · Proteinuria ≥2+</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Coverage Stats -->
+        <div class="section-card">
+          <div class="section-card-header">
+            <div class="section-card-title">📊 मासिक लक्ष्य | Monthly Targets</div>
+          </div>
+          <div class="mini-stats">
+            <div class="mini-stat">
+              <div class="mini-stat-num">4/6</div>
+              <div class="mini-stat-label">ANC विज़िट</div>
+            </div>
+            <div class="mini-stat">
+              <div class="mini-stat-num saffron">2/3</div>
+              <div class="mini-stat-label">SAM स्क्रीनिंग</div>
+            </div>
+            <div class="mini-stat">
+              <div class="mini-stat-num" style="color:var(--india-green)">5/6</div>
+              <div class="mini-stat-label">टीकाकरण</div>
+            </div>
+            <div class="mini-stat">
+              <div class="mini-stat-num" style="color:var(--risk-medium)">1/2</div>
+              <div class="mini-stat-label">JSY दावे</div>
+            </div>
+          </div>
+          <div style="padding:0 14px 10px;">
+            <div class="progress-item">
+              <div class="progress-label">
+                <span>ANC Coverage</span><span style="color:var(--navy);font-weight:700;">67%</span>
+              </div>
+              <div class="prog-track"><div class="prog-fill" style="width:67%;background:var(--navy)"></div></div>
+            </div>
+            <div class="progress-item">
+              <div class="progress-label">
+                <span>Immunization</span><span style="color:var(--india-green);font-weight:700;">83%</span>
+              </div>
+              <div class="prog-track"><div class="prog-fill" style="width:83%;background:var(--india-green)"></div></div>
+            </div>
+            <div class="progress-item">
+              <div class="progress-label">
+                <span>Nutrition Screening</span><span style="color:var(--saffron);font-weight:700;">50%</span>
+              </div>
+              <div class="prog-track"><div class="prog-fill" style="width:50%;background:var(--saffron)"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="section-card">
+          <div class="section-card-header">
+            <div class="section-card-title">⚡ त्वरित कार्रवाई | Quick Actions</div>
+          </div>
+          <div style="padding:14px;display:flex;flex-direction:column;gap:8px;">
+            <button class="btn btn-navy" style="width:100%;justify-content:center;">➕ नया मरीज़ दर्ज करें</button>
+            <button class="btn btn-saffron" style="width:100%;justify-content:center;">📋 आज की विज़िट दर्ज करें</button>
+            <button class="btn btn-outline" style="width:100%;justify-content:center;" onclick="doSync()">🔄 डेटा सिंक करें</button>
+            <button class="btn btn-outline" style="width:100%;justify-content:center;">💰 JSY दावा दाखिल करें</button>
+          </div>
+        </div>
+
+      </div><!-- /right col -->
+    </div><!-- /two-col -->
+
+  </main>
+
+  <!-- GOV FOOTER -->
+  <footer class="gov-footer">
+    <div>
+      <strong>राष्ट्रीय स्वास्थ्य मिशन | National Health Mission</strong> &nbsp;·&nbsp;
+      <strong>स्वास्थ्य एवं परिवार कल्याण मंत्रालय | MoHFW</strong> &nbsp;·&nbsp; Government of India
+    </div>
+    <div style="font-size:10.5px;color:rgba(255,255,255,0.4);">
+      Version 1.0.4 &nbsp;|&nbsp; ASHA ID: <strong>MP-BPL-0042</strong> &nbsp;|&nbsp; Sub-centre: SC-BPL-004 &nbsp;|&nbsp; Last synced: 29 Apr 2026, 10:32 AM
+    </div>
+    <div class="gov-footer-links">
+      <a href="#">Privacy Policy</a>
+      <a href="#">Terms</a>
+      <a href="#">Help</a>
+    </div>
+  </footer>
+
+</div><!-- /shell -->
+
+<script>
+function setNav(btn) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function setFilter(filter, btn) {
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('#patient-tbody tr').forEach(row => {
+    if (filter === 'all') {
+      row.classList.remove('hidden');
+    } else if (filter === 'critical' || filter === 'high') {
+      row.classList.toggle('hidden', row.dataset.risk !== filter);
+    } else {
+      row.classList.toggle('hidden', row.dataset.type !== filter);
+    }
+  });
+}
+
+function doSync() {
+  const badge = document.getElementById('sync-badge');
+  const icon = document.getElementById('sync-icon');
+  const text = document.getElementById('sync-text');
+  badge.className = 'sync-badge syncing';
+  icon.classList.add('spin');
+  text.textContent = 'Syncing…';
+  setTimeout(() => {
+    badge.className = 'sync-badge synced';
+    icon.classList.remove('spin');
+    icon.textContent = '✓';
+    text.textContent = 'Synced';
+  }, 2500);
+}
+
+function updateOnlineStatus() {
+  const banner = document.getElementById('offline-banner');
+  const badge = document.getElementById('sync-badge');
+  if (!navigator.onLine) {
+    banner.classList.add('visible');
+    badge.className = 'sync-badge offline';
+    document.getElementById('sync-icon').textContent = '●';
+    document.getElementById('sync-text').textContent = 'Offline';
+  } else {
+    banner.classList.remove('visible');
+  }
+}
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+updateOnlineStatus();
+</script>
+</body>
+</html>

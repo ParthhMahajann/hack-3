@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1a3a6b">
+<title>Block Health Officer — ASHA Saheli</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --navy:#1a3a6b; --navy-dark:#122c54; --saffron:#E87722;
+  --india-green:#138808; --bg:#F0F2F5; --card:#fff;
+  --text:#1a1a1a; --muted:#555; --border:#D0D7DE;
+  --green-bg:#F0FDF4; --green-border:#86EFAC; --green-text:#15803D;
+  --yellow-bg:#FEFCE8; --yellow-border:#FDE047; --yellow-text:#854D0E;
+  --red-bg:#FFF1F2; --red-border:#FECACA; --red-text:#B91C1C;
+  --purple-bg:#FAF5FF; --purple-border:#C4B5FD; --purple-text:#6B21A8;
+  --radius:4px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans','Noto Sans Devanagari',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;}
+
+/* GOV BANNER */
+.gov-banner{background:var(--navy-dark);color:rgba(255,255,255,.7);font-size:11.5px;display:flex;align-items:center;justify-content:space-between;padding:5px 24px;border-bottom:1px solid rgba(255,255,255,.08);}
+.tricolor{display:flex;height:8px;}
+.tricolor .tc-s{flex:1;background:#FF9933;}
+.tricolor .tc-w{flex:1;background:#fff;}
+.tricolor .tc-g{flex:1;background:#138808;}
+
+/* TOPBAR */
+.topbar{background:var(--navy);display:flex;align-items:center;padding:0 24px;gap:16px;height:60px;border-bottom:3px solid var(--saffron);position:sticky;top:0;z-index:60;box-shadow:0 2px 10px rgba(0,0,0,.25);}
+.topbar-brand{display:flex;align-items:center;gap:12px;}
+.brand-name{font-size:16px;font-weight:700;color:#fff;}
+.brand-sub{font-size:10px;color:rgba(255,255,255,.55);}
+.topbar-divider{width:1px;height:32px;background:rgba(255,255,255,.15);}
+.officer-tag{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.85);font-size:12px;font-weight:600;padding:4px 12px;border-radius:var(--radius);}
+.topbar-right{display:flex;align-items:center;gap:10px;margin-left:auto;}
+.topbar-date{font-size:12px;color:rgba(255,255,255,.5);padding:5px 10px;border:1px solid rgba(255,255,255,.15);border-radius:var(--radius);}
+.btn{display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-size:12.5px;font-weight:600;padding:7px 14px;border-radius:var(--radius);border:none;cursor:pointer;transition:opacity .15s;}
+.btn-navy{background:var(--navy);color:#fff;}
+.btn-saffron{background:var(--saffron);color:#fff;}
+.btn-outline{background:transparent;border:1.5px solid var(--navy);color:var(--navy);}
+.btn-sm{font-size:11.5px;padding:5px 10px;}
+.sync-badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:var(--radius);display:inline-flex;align-items:center;gap:5px;}
+.sync-badge.synced{background:#14532d;color:#BBF7D0;border:1px solid #166534;}
+
+/* LAYOUT */
+.shell{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 68px - 21px);}
+.sidebar{background:var(--navy-dark);border-right:1px solid rgba(255,255,255,.08);padding:16px 0;display:flex;flex-direction:column;}
+.sidebar-section{font-size:9.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.3);padding:14px 18px 5px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 18px;color:rgba(255,255,255,.6);cursor:pointer;font-size:13px;font-weight:500;border-left:3px solid transparent;background:none;border-top:none;border-right:none;border-bottom:none;width:100%;text-align:left;font-family:inherit;transition:all .12s;}
+.nav-item:hover{background:rgba(255,255,255,.06);color:#fff;}
+.nav-item.active{background:rgba(232,119,34,.12);color:#fff;border-left-color:var(--saffron);}
+.nav-badge{margin-left:auto;background:var(--red-text);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;min-width:18px;text-align:center;}
+.nav-badge.purple{background:var(--purple-text);}
+.sidebar-footer{margin-top:auto;padding:14px 18px;border-top:1px solid rgba(255,255,255,.08);font-size:10px;color:rgba(255,255,255,.3);line-height:1.7;}
+.sidebar-footer strong{color:rgba(255,255,255,.5);}
+
+.main{padding:22px 28px 40px;min-width:0;}
+
+/* PAGE HEADER */
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:16px;flex-wrap:wrap;}
+.page-title{font-size:20px;font-weight:700;color:var(--navy);}
+.page-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.page-actions{display:flex;gap:8px;flex-wrap:wrap;}
+
+/* STATS */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;display:flex;align-items:flex-start;gap:12px;}
+.stat-icon{width:42px;height:42px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
+.stat-icon.navy{background:#EEF2FF;}
+.stat-icon.red{background:#FEF2F2;}
+.stat-icon.orange{background:#FFF7ED;}
+.stat-icon.green{background:#F0FDF4;}
+.stat-num{font-size:26px;font-weight:700;color:var(--navy);line-height:1;}
+.stat-num.red{color:var(--red-text);}
+.stat-num.orange{color:#C2410C;}
+.stat-label{font-size:11.5px;color:var(--muted);margin-top:3px;font-weight:500;}
+.stat-sub{font-size:10.5px;color:#A0AEC0;margin-top:2px;}
+
+/* SECTION CARD */
+.section-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:20px;}
+.section-header{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#FAFBFC;gap:10px;}
+.section-title{font-size:13.5px;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:8px;}
+.collapse-btn{background:none;border:none;font-size:12px;color:var(--muted);cursor:pointer;font-family:inherit;font-weight:600;}
+
+/* ALERT TABLE */
+.alert-list{}
+.alert-row{padding:12px 18px;border-left:4px solid transparent;border-bottom:1px solid #F3F4F6;display:flex;align-items:flex-start;gap:12px;transition:background .1s;}
+.alert-row:hover{background:#F8F9FB;}
+.alert-row:last-child{border-bottom:none;}
+.alert-row.purple{border-left-color:var(--purple-text);background:var(--purple-bg);}
+.alert-row.red{border-left-color:var(--red-text);background:var(--red-bg);}
+.ar-body{flex:1;min-width:0;}
+.ar-name{font-size:13px;font-weight:700;}
+.ar-score{font-size:11px;color:var(--muted);margin-top:1px;}
+.ar-params{font-size:12px;color:#374151;margin-top:3px;line-height:1.5;}
+.ar-ts{font-size:10.5px;color:#A0AEC0;margin-top:3px;}
+.ar-side{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+.risk-badge{display:inline-block;font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:var(--radius);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;}
+.risk-badge.purple{background:var(--purple-bg);color:var(--purple-text);border:1px solid var(--purple-border);}
+.risk-badge.red{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-border);}
+.risk-badge.yellow{background:var(--yellow-bg);color:var(--yellow-text);border:1px solid var(--yellow-border);}
+.risk-badge.green{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border);}
+.btn-ack{background:var(--navy);color:#fff;border:none;border-radius:var(--radius);font-size:11px;font-weight:700;padding:4px 10px;cursor:pointer;font-family:inherit;}
+
+/* PATIENT TABLE */
+.pt-table{width:100%;border-collapse:collapse;}
+.pt-table thead tr{background:#F8F9FA;}
+.pt-table th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);padding:9px 18px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
+.pt-table td{padding:11px 18px;border-bottom:1px solid #F3F4F6;vertical-align:middle;}
+.pt-table tbody tr{border-left:3px solid transparent;transition:background .1s;}
+.pt-table tbody tr:hover{background:#F8F9FB;}
+.pt-table tbody tr.row-purple{border-left-color:var(--purple-text);}
+.pt-table tbody tr.row-red{border-left-color:var(--red-text);}
+.pt-name{font-weight:700;font-size:13px;}
+.pt-meta{font-size:11px;color:var(--muted);margin-top:1px;}
+.pt-id{font-size:10px;color:#A0AEC0;margin-top:1px;font-family:monospace;}
+.risk-bar-wrap{min-width:100px;}
+.risk-bar-track{height:5px;background:#E5E7EB;border-radius:2px;overflow:hidden;}
+.risk-bar-fill{height:100%;border-radius:2px;}
+.risk-bar-fill.purple{background:var(--purple-text);}
+.risk-bar-fill.red{background:var(--red-text);}
+.risk-score{font-size:11px;font-weight:700;color:var(--navy);margin-top:2px;}
+
+/* CHARTS */
+.charts-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:18px;}
+.chart-box{}
+.chart-title{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:12px;}
+.chart-canvas{height:200px;}
+
+/* METHODOLOGY CARD */
+.method-list{padding:14px 18px;}
+.method-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid #F3F4F6;font-size:12.5px;}
+.method-item:last-child{border-bottom:none;}
+.method-num{background:var(--navy);color:#fff;font-size:10px;font-weight:700;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.method-text{color:var(--text);}
+.method-text span{color:var(--muted);}
+
+/* HIERARCHY */
+.hierarchy{display:flex;gap:0;padding:16px 18px;overflow-x:auto;}
+.hier-step{display:flex;flex-direction:column;align-items:center;flex:1;min-width:100px;}
+.hier-box{background:var(--navy);color:#fff;border-radius:var(--radius);padding:9px 6px;text-align:center;font-size:11.5px;font-weight:700;width:100%;position:relative;}
+.hier-box.active{background:var(--saffron);}
+.hier-arrow{font-size:16px;color:var(--navy);margin-top:6px;}
+.hier-step:last-child .hier-arrow{display:none;}
+.hier-row{display:flex;align-items:center;gap:0;}
+.hier-connector{flex:1;height:2px;background:var(--navy);margin-top:-2px;}
+
+/* FOOTER */
+.gov-footer{background:var(--navy-dark);color:rgba(255,255,255,.4);font-size:11px;display:flex;align-items:center;justify-content:space-between;padding:12px 24px;flex-wrap:wrap;gap:8px;border-top:2px solid var(--saffron);}
+.gov-footer strong{color:rgba(255,255,255,.65);}
+
+/* Collapsible */
+.collapsible{overflow:hidden;transition:max-height .3s ease;}
+.collapsible.collapsed{max-height:0 !important;}
+</style>
+</head>
+<body>
+
+<!-- GOV BANNER -->
+<div class="gov-banner">
+  <span>भारत सरकार | Government of India &nbsp;·&nbsp; राष्ट्रीय स्वास्थ्य मिशन | NHM &nbsp;·&nbsp; MoHFW</span>
+  <span>District: Bhopal &nbsp;·&nbsp; Block: Berasia</span>
+</div>
+<div class="tricolor"></div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
+      <circle cx="19" cy="17" r="10" fill="none" stroke="#E5C97E" stroke-width="1.2"/>
+      <circle cx="19" cy="17" r="3.5" fill="none" stroke="#E5C97E" stroke-width="1"/>
+      <circle cx="19" cy="17" r="1.2" fill="#E5C97E"/>
+      <g stroke="#E5C97E" stroke-width=".6">
+        <line x1="19" y1="8" x2="19" y2="13" transform="rotate(0 19 17)"/>
+        <line x1="19" y1="8" x2="19" y2="13" transform="rotate(30 19 17)"/>
+        <line x1="19" y1="8" x2="19" y2="13" transform="rotate(60 19 17)"/>
+        <line x1="19" y1="8" x2="19" y2="13" transform="rotate(90 19 17)"/>
+        <line x1="19" y1="8" x2="19" y2="13" transform="rotate(120 19 17)"/>
+        <line x1="19" y1="8" x2="19" y2="13" transform="rotate(150 19 17)"/>
+        <line x1="19" y1="21" x2="19" y2="26" transform="rotate(0 19 17)"/>
+        <line x1="19" y1="21" x2="19" y2="26" transform="rotate(30 19 17)"/>
+        <line x1="19" y1="21" x2="19" y2="26" transform="rotate(60 19 17)"/>
+        <line x1="19" y1="21" x2="19" y2="26" transform="rotate(90 19 17)"/>
+        <line x1="19" y1="21" x2="19" y2="26" transform="rotate(120 19 17)"/>
+        <line x1="19" y1="21" x2="19" y2="26" transform="rotate(150 19 17)"/>
+      </g>
+      <ellipse cx="13.5" cy="31" rx="3.2" ry="1.8" fill="#E5C97E"/>
+      <ellipse cx="24.5" cy="31" rx="3.2" ry="1.8" fill="#E5C97E"/>
+      <circle cx="13.2" cy="28.8" r="2" fill="#E5C97E"/>
+      <circle cx="24.8" cy="28.8" r="2" fill="#E5C97E"/>
+    </svg>
+    <div>
+      <div class="brand-name">ASHA Saheli</div>
+      <div class="brand-sub">डिजिटल फील्ड डायरी</div>
+    </div>
+  </div>
+  <div class="topbar-divider"></div>
+  <span class="officer-tag">🏛 Block Health Officer View</span>
+  <div class="topbar-right">
+    <div class="topbar-date">29 Apr 2026 &nbsp;|&nbsp; मंगलवार</div>
+    <div class="sync-badge synced">✓ Synced</div>
+    <button class="btn btn-outline btn-sm" onclick="alert('Exporting HMIS CSV…')">📊 Export HMIS CSV</button>
+    <button class="btn btn-saffron btn-sm" onclick="location.href='dashboard.html'">📱 ASHA View</button>
+  </div>
+</div>
+
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">Overview</div>
+    <button class="nav-item active">🏠 Block Dashboard</button>
+    <button class="nav-item">🚨 Active Alerts<span class="nav-badge purple">5</span></button>
+    <button class="nav-item">👥 All Patients<span class="nav-badge">24</span></button>
+    <div class="sidebar-section">ASHA Workers</div>
+    <button class="nav-item">🧑‍⚕️ Sunita Devi<span class="nav-badge" style="background:#15803D;">6</span></button>
+    <button class="nav-item">🧑‍⚕️ Rekha Sharma<span class="nav-badge" style="background:#15803D;">8</span></button>
+    <button class="nav-item">🧑‍⚕️ Geeta Patel<span class="nav-badge" style="background:#15803D;">10</span></button>
+    <div class="sidebar-section">Reports</div>
+    <button class="nav-item">📊 Monthly Analytics</button>
+    <button class="nav-item">💰 JSY Incentives</button>
+    <button class="nav-item">📋 HMIS Export</button>
+    <div class="sidebar-footer">
+      <strong>Block: Berasia, Bhopal</strong><br>
+      Officer: Dr. Ramesh Gupta<br>
+      NHM · MoHFW · v1.0
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <div class="page-header">
+      <div>
+        <div class="page-title">Block Dashboard — अवलोकन</div>
+        <div class="page-sub">Berasia Block · 3 ASHA workers · 29 April 2026</div>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-outline" onclick="refreshData()">🔄 Refresh</button>
+        <button class="btn btn-outline" onclick="alert('Exporting…')">📊 Export HMIS</button>
+        <button class="btn btn-navy" onclick="toggleAlerts()">🔔 Toggle Alerts</button>
+      </div>
+    </div>
+
+    <!-- STAT GRID -->
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-icon navy">👥</div><div><div class="stat-num">24</div><div class="stat-label">Total Patients</div><div class="stat-sub">Across 3 ASHAs</div></div></div>
+      <div class="stat-card"><div class="stat-icon red">🚨</div><div><div class="stat-num red">8</div><div class="stat-label">High Risk</div><div class="stat-sub">3 Critical · 5 High</div></div></div>
+      <div class="stat-card"><div class="stat-icon orange">🔔</div><div><div class="stat-num orange">5</div><div class="stat-label">Unacknowledged</div><div class="stat-sub">Action required</div></div></div>
+      <div class="stat-card"><div class="stat-icon green">💰</div><div><div class="stat-num" style="font-size:20px;padding-top:3px;">₹8,400</div><div class="stat-label">Pending Incentives</div><div class="stat-sub">Awaiting verification</div></div></div>
+    </div>
+
+    <!-- ALERTS SECTION -->
+    <div class="section-card" id="alerts-section">
+      <div class="section-header">
+        <div class="section-title">🔴 Unacknowledged Alerts <span style="background:#FEE2E2;color:var(--red-text);font-size:10px;padding:1px 7px;border-radius:10px;font-weight:700;">5</span></div>
+        <button class="collapse-btn" onclick="toggleSection('alerts-body', this)">▲ Collapse</button>
+      </div>
+      <div class="alert-list collapsible" id="alerts-body" style="max-height:600px;">
+        <div class="alert-row purple">
+          <div class="ar-body">
+            <div class="ar-name">Raju (M/8mo) &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400;">ASHA: Sunita Devi</span></div>
+            <div class="ar-score">Score 90/100 · Child · SC-BPL-004</div>
+            <div class="ar-params">SAM: MUAC=108mm · Immediate NRC referral needed</div>
+            <div class="ar-ts">Today, 08:14 AM</div>
+          </div>
+          <div class="ar-side">
+            <span class="risk-badge purple">अति-गंभीर</span>
+            <button class="btn-ack" onclick="acknowledge(this)">✓ Acknowledge</button>
+          </div>
+        </div>
+        <div class="alert-row purple">
+          <div class="ar-body">
+            <div class="ar-name">Meena Yadav &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400;">ASHA: Sunita Devi</span></div>
+            <div class="ar-score">Score 85/100 · Maternal · SC-BPL-004</div>
+            <div class="ar-params">Severe anaemia · Pre-eclampsia BP · Proteinuria</div>
+            <div class="ar-ts">Today, 07:52 AM</div>
+          </div>
+          <div class="ar-side">
+            <span class="risk-badge purple">अति-गंभीर</span>
+            <button class="btn-ack" onclick="acknowledge(this)">✓ Acknowledge</button>
+          </div>
+        </div>
+        <div class="alert-row red">
+          <div class="ar-body">
+            <div class="ar-name">Sita Kumari &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400;">ASHA: Sunita Devi</span></div>
+            <div class="ar-score">Score 65/100 · Maternal · SC-BPL-004</div>
+            <div class="ar-params">Pre-eclampsia BP · Proteinuria ≥2+</div>
+            <div class="ar-ts">Yesterday, 04:30 PM</div>
+          </div>
+          <div class="ar-side">
+            <span class="risk-badge red">उच्च जोखिम</span>
+            <button class="btn-ack" onclick="acknowledge(this)">✓ Acknowledge</button>
+          </div>
+        </div>
+        <div class="alert-row purple">
+          <div class="ar-body">
+            <div class="ar-name">Kamla Devi &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400;">ASHA: Rekha Sharma</span></div>
+            <div class="ar-score">Score 88/100 · Maternal · SC-BPL-007</div>
+            <div class="ar-params">Hb=7.2 g/dL · Severe anaemia · GDM suspected</div>
+            <div class="ar-ts">Yesterday, 11:15 AM</div>
+          </div>
+          <div class="ar-side">
+            <span class="risk-badge purple">अति-गंभीर</span>
+            <button class="btn-ack" onclick="acknowledge(this)">✓ Acknowledge</button>
+          </div>
+        </div>
+        <div class="alert-row red">
+          <div class="ar-body">
+            <div class="ar-name">Santosh (M/6mo) &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400;">ASHA: Geeta Patel</span></div>
+            <div class="ar-score">Score 70/100 · Child · SC-BPL-011</div>
+            <div class="ar-params">MAM: MUAC=118mm · Fever 5 days · Not drinking well</div>
+            <div class="ar-ts">Today, 06:40 AM</div>
+          </div>
+          <div class="ar-side">
+            <span class="risk-badge red">उच्च जोखिम</span>
+            <button class="btn-ack" onclick="acknowledge(this)">✓ Acknowledge</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PATIENT TABLE -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-title">🚨 High-Risk Patient List <span style="background:#FEE2E2;color:var(--red-text);font-size:10px;padding:1px 7px;border-radius:10px;font-weight:700;">8 patients</span></div>
+        <button class="collapse-btn" onclick="toggleSection('patient-table-body', this)">▲ Collapse</button>
+      </div>
+      <div class="collapsible" id="patient-table-body" style="max-height:800px;">
+        <table class="pt-table">
+          <thead>
+            <tr>
+              <th>Patient</th><th>ASHA Worker</th><th>Risk Level</th><th>Score</th><th>Address</th><th>Phone</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="row-purple">
+              <td><div class="pt-name">Raju (M/8mo)</div><div class="pt-meta">Child</div><div class="pt-id">MP-BPL-0131</div></td>
+              <td style="font-size:12px;">Sunita Devi</td>
+              <td><span class="risk-badge purple">अति-गंभीर</span></td>
+              <td><div class="risk-bar-wrap"><div class="risk-bar-track"><div class="risk-bar-fill purple" style="width:90%"></div></div><div class="risk-score">90/100</div></div></td>
+              <td style="font-size:12px;color:var(--muted);">H.No. 3, Naya Tola, Rampur</td>
+              <td><a href="tel:9876543210" style="color:var(--navy);font-weight:600;font-size:12px;">98765 43210</a></td>
+            </tr>
+            <tr class="row-purple">
+              <td><div class="pt-name">Meena Yadav</div><div class="pt-meta">Maternal · G2P1</div><div class="pt-id">MP-BPL-0112</div></td>
+              <td style="font-size:12px;">Sunita Devi</td>
+              <td><span class="risk-badge purple">अति-गंभीर</span></td>
+              <td><div class="risk-bar-wrap"><div class="risk-bar-track"><div class="risk-bar-fill purple" style="width:85%"></div></div><div class="risk-score">85/100</div></div></td>
+              <td style="font-size:12px;color:var(--muted);">H.No. 12, Rampur</td>
+              <td><a href="tel:9812345678" style="color:var(--navy);font-weight:600;font-size:12px;">98123 45678</a></td>
+            </tr>
+            <tr class="row-purple">
+              <td><div class="pt-name">Kamla Devi</div><div class="pt-meta">Maternal · G3P2</div><div class="pt-id">MP-BPL-0087</div></td>
+              <td style="font-size:12px;">Rekha Sharma</td>
+              <td><span class="risk-badge purple">अति-गंभीर</span></td>
+              <td><div class="risk-bar-wrap"><div class="risk-bar-track"><div class="risk-bar-fill purple" style="width:88%"></div></div><div class="risk-score">88/100</div></div></td>
+              <td style="font-size:12px;color:var(--muted);">H.No. 5, Berasia Town</td>
+              <td><a href="tel:9765432109" style="color:var(--navy);font-weight:600;font-size:12px;">97654 32109</a></td>
+            </tr>
+            <tr class="row-red">
+              <td><div class="pt-name">Sita Kumari</div><div class="pt-meta">Maternal · G1P0</div><div class="pt-id">MP-BPL-0119</div></td>
+              <td style="font-size:12px;">Sunita Devi</td>
+              <td><span class="risk-badge red">उच्च जोखिम</span></td>
+              <td><div class="risk-bar-wrap"><div class="risk-bar-track"><div class="risk-bar-fill red" style="width:65%"></div></div><div class="risk-score">65/100</div></div></td>
+              <td style="font-size:12px;color:var(--muted);">H.No. 7, Khandwa Rd</td>
+              <td><a href="tel:9823456781" style="color:var(--navy);font-weight:600;font-size:12px;">98234 56781</a></td>
+            </tr>
+            <tr class="row-red">
+              <td><div class="pt-name">Santosh (M/6mo)</div><div class="pt-meta">Child</div><div class="pt-id">MP-BPL-0201</div></td>
+              <td style="font-size:12px;">Geeta Patel</td>
+              <td><span class="risk-badge red">उच्च जोखिम</span></td>
+              <td><div class="risk-bar-wrap"><div class="risk-bar-track"><div class="risk-bar-fill red" style="width:70%"></div></div><div class="risk-score">70/100</div></div></td>
+              <td style="font-size:12px;color:var(--muted);">H.No. 14, Silwani Village</td>
+              <td><a href="tel:9834567892" style="color:var(--navy);font-weight:600;font-size:12px;">98345 67892</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-title">📊 Analytics — Block Overview</div>
+        <button class="collapse-btn" onclick="toggleSection('charts-body', this)">▲ Collapse</button>
+      </div>
+      <div class="collapsible" id="charts-body" style="max-height:400px;">
+        <div class="charts-grid">
+          <div class="chart-box">
+            <div class="chart-title">Risk Distribution</div>
+            <div class="chart-canvas"><canvas id="chart-donut"></canvas></div>
+          </div>
+          <div class="chart-box">
+            <div class="chart-title">Weekly Risk Score Trend</div>
+            <div class="chart-canvas"><canvas id="chart-line"></canvas></div>
+          </div>
+          <div class="chart-box">
+            <div class="chart-title">ANC Coverage</div>
+            <div class="chart-canvas"><canvas id="chart-bar"></canvas></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- METHODOLOGY -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-title">📚 Risk Scoring Methodology</div>
+        <button class="collapse-btn" onclick="toggleSection('method-body', this)">▲ Collapse</button>
+      </div>
+      <div class="method-list collapsible" id="method-body" style="max-height:500px;">
+        <div class="method-item"><div class="method-num">1</div><div class="method-text">WHO ANC 2016 <span>— Antenatal care guidelines for a positive pregnancy experience</span></div></div>
+        <div class="method-item"><div class="method-num">2</div><div class="method-text">MOHFW IMNCI India 2009 <span>— Integrated Management of Neonatal and Childhood Illness</span></div></div>
+        <div class="method-item"><div class="method-num">3</div><div class="method-text">WHO Child Growth Standards 2006 <span>— Weight-for-age and height-for-age reference tables</span></div></div>
+        <div class="method-item"><div class="method-num">4</div><div class="method-text">WHO MUAC 2013 <span>— Mid-upper arm circumference for acute malnutrition screening</span></div></div>
+        <div class="method-item"><div class="method-num">5</div><div class="method-text">FOGSI 2020 <span>— Federation of Obstetric and Gynaecological Societies of India guidelines</span></div></div>
+        <div class="method-item"><div class="method-num">6</div><div class="method-text">IDF/WHO GDM Criteria <span>— Gestational diabetes mellitus diagnostic thresholds</span></div></div>
+        <div class="method-item"><div class="method-num">7</div><div class="method-text">JSY/JSSK MOHFW 2015 <span>— Janani Suraksha Yojana & Janani Shishu Suraksha Karyakram</span></div></div>
+      </div>
+    </div>
+
+    <!-- HIERARCHY -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-title">🏛 NHM Health Hierarchy</div>
+      </div>
+      <div style="padding:18px;">
+        <div style="display:flex;align-items:center;gap:0;">
+          <div style="flex:1;text-align:center;">
+            <div style="background:var(--india-green);color:#fff;border-radius:var(--radius);padding:10px 8px;font-size:12px;font-weight:700;">🧑‍⚕️ ASHA<div style="font-size:10px;font-weight:400;opacity:.8;margin-top:2px;">Village Level</div></div>
+          </div>
+          <div style="width:24px;height:2px;background:var(--border);flex-shrink:0;"></div>
+          <div style="flex:1;text-align:center;">
+            <div style="background:#0E7490;color:#fff;border-radius:var(--radius);padding:10px 8px;font-size:12px;font-weight:700;">👩‍⚕️ ANM<div style="font-size:10px;font-weight:400;opacity:.8;margin-top:2px;">Sub-centre</div></div>
+          </div>
+          <div style="width:24px;height:2px;background:var(--border);flex-shrink:0;"></div>
+          <div style="flex:1;text-align:center;">
+            <div style="background:#7E22CE;color:#fff;border-radius:var(--radius);padding:10px 8px;font-size:12px;font-weight:700;">🏥 PHC<div style="font-size:10px;font-weight:400;opacity:.8;margin-top:2px;">Primary Health</div></div>
+          </div>
+          <div style="width:24px;height:2px;background:var(--border);flex-shrink:0;"></div>
+          <div style="flex:1;text-align:center;">
+            <div style="background:var(--saffron);color:#fff;border-radius:var(--radius);padding:10px 8px;font-size:12px;font-weight:700;">🏛 Block Officer<div style="font-size:10px;font-weight:400;opacity:.8;margin-top:2px;">← You are here</div></div>
+          </div>
+          <div style="width:24px;height:2px;background:var(--border);flex-shrink:0;"></div>
+          <div style="flex:1;text-align:center;">
+            <div style="background:var(--navy);color:#fff;border-radius:var(--radius);padding:10px 8px;font-size:12px;font-weight:700;">🏢 District/State<div style="font-size:10px;font-weight:400;opacity:.8;margin-top:2px;">NHM HQ</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- GOV FOOTER -->
+<footer class="gov-footer">
+  <div><strong>राष्ट्रीय स्वास्थ्य मिशन | NHM · MoHFW · Government of India</strong></div>
+  <div style="font-size:10.5px;">Version 1.0 &nbsp;|&nbsp; Block: Berasia, Bhopal &nbsp;|&nbsp; Last synced: 29 Apr 2026, 10:32 AM</div>
+  <div style="display:flex;gap:14px;font-size:11px;"><a href="#" style="color:rgba(255,255,255,.45);text-decoration:none;">Privacy</a><a href="#" style="color:rgba(255,255,255,.45);text-decoration:none;">Terms</a><a href="#" style="color:rgba(255,255,255,.45);text-decoration:none;">Help</a></div>
+</footer>
+
+<script>
+// Nav
+document.querySelectorAll('.nav-item').forEach(b => b.addEventListener('click', function(){ document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active')); this.classList.add('active'); }));
+
+function toggleSection(id, btn) {
+  const el = document.getElementById(id);
+  const collapsed = el.classList.toggle('collapsed');
+  btn.textContent = collapsed ? '▼ Expand' : '▲ Collapse';
+}
+function toggleAlerts() { toggleSection('alerts-body', {textContent:''}); }
+function acknowledge(btn) { btn.closest('.alert-row').style.opacity='.4'; btn.textContent='✓ Done'; btn.disabled=true; }
+function refreshData() { const b=document.querySelector('.topbar-right .btn-outline'); b.textContent='🔄 Refreshing…'; setTimeout(()=>{ b.textContent='🔄 Refresh'; },1500); }
+
+// Charts
+window.addEventListener('DOMContentLoaded', () => {
+  // Donut
+  new Chart(document.getElementById('chart-donut'), {
+    type: 'doughnut',
+    data: { labels: ['Green','Yellow','Red','Purple'], datasets: [{ data:[12,4,5,3], backgroundColor:['#15803D','#CA8A04','#B91C1C','#6B21A8'], borderWidth:2 }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ font:{size:11}, boxWidth:12 } } } }
+  });
+  // Line
+  new Chart(document.getElementById('chart-line'), {
+    type: 'line',
+    data: { labels:['Wk 1','Wk 2','Wk 3','Wk 4','Wk 5','Wk 6','Wk 7','Wk 8'], datasets:[{ label:'Avg Risk Score', data:[38,42,45,41,52,48,55,59], borderColor:'#1a3a6b', backgroundColor:'rgba(26,58,107,.08)', fill:true, tension:.4, pointRadius:3 }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ y:{ min:0, max:100, ticks:{font:{size:10}} }, x:{ ticks:{font:{size:10}} } } }
+  });
+  // Bar
+  new Chart(document.getElementById('chart-bar'), {
+    type: 'bar',
+    data: { labels:['Sunita D.','Rekha S.','Geeta P.'], datasets:[{ label:'≥4 ANC',data:[4,5,6],backgroundColor:'#1a3a6b' },{ label:'< 4 ANC',data:[2,3,4],backgroundColor:'#E87722' }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ font:{size:11}, boxWidth:12 } } }, scales:{ x:{ stacked:false }, y:{ stacked:false, ticks:{font:{size:10}} } } }
+  });
+});
+</script>
+</body>
+</html>

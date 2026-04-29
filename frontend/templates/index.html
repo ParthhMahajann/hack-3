@@ -1,85 +1,150 @@
-{% extends "base.html" %}
-{% block title %}ASHA Saheli — Login{% endblock %}
-{% block topbar_sub %}Frontline Health Worker App{% endblock %}
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#1a3a6b">
+<link rel="manifest" href="/static/manifest.json">
+<title>ASHA Saheli — Login</title>
+<link rel="stylesheet" href="/static/css/shared.css">
+<style>
+body { background: var(--navy-dark); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+.login-card { background: #fff; border-radius: var(--radius); width: 100%; max-width: 380px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,.35); }
+.login-header { background: var(--navy); padding: 24px 24px 20px; text-align: center; }
+.login-header .tricolor { margin-bottom: 14px; }
+.emblem-wrap { display: flex; justify-content: center; margin-bottom: 10px; }
+.login-app-name { font-size: 18px; font-weight: 700; color: #fff; }
+.login-app-sub  { font-size: 11px; color: rgba(255,255,255,.6); margin-top: 3px; font-family: 'Noto Sans Devanagari', sans-serif; }
+.login-nhm      { font-size: 10px; color: rgba(255,255,255,.45); margin-top: 6px; }
+.login-body { padding: 24px; }
+.login-instruction { font-size: 12.5px; color: var(--muted); background: #F8F9FA; border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; margin-bottom: 20px; line-height: 1.5; }
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: 12px; font-weight: 600; color: var(--navy); margin-bottom: 5px; }
+.input-wrap { position: relative; }
+.input-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 15px; color: #A0AEC0; pointer-events: none; }
+.fc { width: 100%; padding: 11px 12px 11px 38px; border: 1.5px solid var(--border); border-radius: var(--radius); font-family: inherit; font-size: 14px; color: var(--text); transition: border-color .15s; }
+.fc:focus { outline: none; border-color: var(--navy); }
+.btn-login { width: 100%; padding: 13px; background: var(--navy); color: #fff; border: none; border-radius: var(--radius); font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px; transition: background .15s; }
+.btn-login:hover { background: var(--navy-dark); }
+.login-error { background: #FEF2F2; border: 1px solid #FECACA; color: var(--red-text); border-radius: var(--radius); padding: 9px 12px; font-size: 12.5px; font-weight: 500; margin-bottom: 14px; display: none; }
+.login-error.visible { display: block; }
+.demo-box { background: #F0FDF4; border: 1px solid #86EFAC; border-radius: var(--radius); padding: 10px 12px; margin-top: 14px; font-size: 12px; color: #14532D; line-height: 1.6; }
+.demo-btns { display: flex; gap: 8px; margin-top: 10px; }
+.demo-btn { flex: 1; padding: 7px; border: 1.5px solid var(--navy); border-radius: var(--radius); background: transparent; color: var(--navy); font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.demo-btn:hover { background: var(--navy); color: #fff; }
+.login-footer { background: #F8F9FA; border-top: 1px solid var(--border); padding: 12px 24px; text-align: center; font-size: 10.5px; color: #A0AEC0; }
+</style>
+</head>
+<body>
 
-{% block content %}
-<div style="max-width:400px;margin:2rem auto;">
-  <div style="text-align:center;margin-bottom:2rem;">
-    <div style="font-size:4rem;">🌿</div>
-    <h1 style="font-size:1.8rem;color:#0f4c35;font-weight:800;">ASHA Saheli</h1>
-    <p style="color:#757575;margin-top:0.5rem;font-size:0.9rem;">
-      Offline-first field diary for ASHA workers.<br>
-      Log visits, flag risks, sync when connected.
-    </p>
+<div class="login-card fade-in">
+  <div class="login-header">
+    <div class="tricolor"><div class="tc-s"></div><div class="tc-w"></div><div class="tc-g"></div></div>
+    <div class="emblem-wrap">
+      <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+        <circle cx="26" cy="24" r="14" fill="none" stroke="#E5C97E" stroke-width="1.5"/>
+        <circle cx="26" cy="24" r="5" fill="none" stroke="#E5C97E" stroke-width="1.2"/>
+        <circle cx="26" cy="24" r="1.6" fill="#E5C97E"/>
+        <g stroke="#E5C97E" stroke-width=".8">
+          <line x1="26" y1="11" x2="26" y2="19" transform="rotate(0 26 24)"/>
+          <line x1="26" y1="11" x2="26" y2="19" transform="rotate(30 26 24)"/>
+          <line x1="26" y1="11" x2="26" y2="19" transform="rotate(60 26 24)"/>
+          <line x1="26" y1="11" x2="26" y2="19" transform="rotate(90 26 24)"/>
+          <line x1="26" y1="11" x2="26" y2="19" transform="rotate(120 26 24)"/>
+          <line x1="26" y1="11" x2="26" y2="19" transform="rotate(150 26 24)"/>
+          <line x1="26" y1="29" x2="26" y2="37" transform="rotate(0 26 24)"/>
+          <line x1="26" y1="29" x2="26" y2="37" transform="rotate(30 26 24)"/>
+          <line x1="26" y1="29" x2="26" y2="37" transform="rotate(60 26 24)"/>
+          <line x1="26" y1="29" x2="26" y2="37" transform="rotate(90 26 24)"/>
+          <line x1="26" y1="29" x2="26" y2="37" transform="rotate(120 26 24)"/>
+          <line x1="26" y1="29" x2="26" y2="37" transform="rotate(150 26 24)"/>
+        </g>
+        <ellipse cx="19" cy="42" rx="4.5" ry="2.5" fill="#E5C97E"/>
+        <ellipse cx="33" cy="42" rx="4.5" ry="2.5" fill="#E5C97E"/>
+        <circle cx="18.5" cy="39" r="2.8" fill="#E5C97E"/>
+        <circle cx="33.5" cy="39" r="2.8" fill="#E5C97E"/>
+      </svg>
+    </div>
+    <div class="login-app-name">ASHA Saheli</div>
+    <div class="login-app-sub">डिजिटल फील्ड डायरी</div>
+    <div class="login-nhm">राष्ट्रीय स्वास्थ्य मिशन · NHM · MoHFW</div>
   </div>
 
-  <div class="card">
-    <div id="login-error" style="color:#c62828;font-size:0.85rem;margin-bottom:0.75rem;display:none;"></div>
-    <div class="form-group">
-      <label class="form-label">Email</label>
-      <input type="email" id="email" class="form-control" placeholder="asha1@demo.in" autocomplete="username">
+  <div class="login-body">
+    <div class="login-instruction">
+      अपना ईमेल और पासवर्ड दर्ज करें।<br>
+      <strong>Enter your email and password.</strong>
     </div>
-    <div class="form-group">
-      <label class="form-label">Password</label>
-      <input type="password" id="password" class="form-control" placeholder="••••••••" autocomplete="current-password">
+    <div id="login-error" class="login-error">❌ Incorrect email or password.</div>
+    <form onsubmit="doLogin(event)">
+      <div class="form-group">
+        <label class="form-label">Email / User ID</label>
+        <div class="input-wrap">
+          <span class="input-icon">👤</span>
+          <input id="email" class="fc" type="email" placeholder="asha1@demo.in" autocomplete="username" inputmode="email">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">पासवर्ड | Password</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔒</span>
+          <input id="password" class="fc" type="password" placeholder="Enter password" autocomplete="current-password">
+        </div>
+      </div>
+      <button type="submit" class="btn-login" id="login-btn">लॉगिन करें | Login →</button>
+    </form>
+    <div class="demo-box">
+      <strong>Demo Accounts:</strong><br>
+      ASHA Worker: asha1@demo.in / asha123<br>
+      Block Officer: officer@demo.in / officer123
+      <div class="demo-btns">
+        <button class="demo-btn" onclick="fill('asha')">📱 ASHA Login</button>
+        <button class="demo-btn" onclick="fill('officer')">🏛 Officer Login</button>
+      </div>
     </div>
-    <button class="btn btn-primary btn-full" onclick="doLogin()">Login</button>
   </div>
-
-  <div class="card" style="background:#e8f5ee;">
-    <div style="font-size:0.8rem;color:#0f4c35;font-weight:600;margin-bottom:0.5rem;">Demo Accounts</div>
-    <div style="font-size:0.8rem;color:#555;line-height:1.8;">
-      <strong>ASHA Worker:</strong> asha1@demo.in / asha123<br>
-      <strong>Block Officer:</strong> officer@demo.in / officer123
-    </div>
-    <div style="display:flex;gap:0.5rem;margin-top:0.75rem;">
-      <button class="btn btn-ghost btn-sm" onclick="fillDemo('asha')">ASHA Login</button>
-      <button class="btn btn-ghost btn-sm" onclick="fillDemo('officer')">Officer Login</button>
-    </div>
-  </div>
+  <div class="login-footer">समस्या के लिए ANM से संपर्क करें &nbsp;|&nbsp; Contact ANM for support</div>
 </div>
-{% endblock %}
 
-{% block scripts %}
+<div id="toast"></div>
+
 <script>
-function fillDemo(role) {
-  if (role === 'asha') {
-    document.getElementById('email').value = 'asha1@demo.in';
-    document.getElementById('password').value = 'asha123';
-  } else {
-    document.getElementById('email').value = 'officer@demo.in';
-    document.getElementById('password').value = 'officer123';
-  }
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+
+function fill(role) {
+  document.getElementById('email').value    = role === 'asha' ? 'asha1@demo.in' : 'officer@demo.in';
+  document.getElementById('password').value = role === 'asha' ? 'asha123' : 'officer123';
 }
 
-async function doLogin() {
-  const email = document.getElementById('email').value;
+async function doLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('email').value.trim();
   const pass  = document.getElementById('password').value;
-  const errEl = document.getElementById('login-error');
-  errEl.style.display = 'none';
-
+  const err   = document.getElementById('login-error');
+  const btn   = document.getElementById('login-btn');
+  err.classList.remove('visible');
+  if (!email || !pass) { err.textContent = '⚠ Please enter email and password.'; err.classList.add('visible'); return; }
+  btn.textContent = 'Logging in…'; btn.disabled = true;
   const form = new URLSearchParams();
-  form.append('username', email);
-  form.append('password', pass);
-
+  form.append('username', email); form.append('password', pass);
   try {
-    const resp = await fetch('/auth/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: form.toString(),
-    });
-    if (!resp.ok) { errEl.textContent = 'Invalid email or password'; errEl.style.display = 'block'; return; }
-    const data = await resp.json();
+    const r = await fetch('/auth/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: form.toString() });
+    if (!r.ok) { err.textContent = '❌ Incorrect email or password.'; err.classList.add('visible'); btn.textContent = 'लॉगिन करें | Login →'; btn.disabled = false; return; }
+    const data = await r.json();
     localStorage.setItem('asha_token', data.access_token);
     localStorage.setItem('asha_role', data.role);
     localStorage.setItem('asha_name', data.name);
     localStorage.setItem('asha_user_id', data.user_id);
     window.location.href = data.role === 'block_officer' ? '/officer' : '/app';
   } catch {
-    errEl.textContent = 'Network error — try again'; errEl.style.display = 'block';
+    err.textContent = '⚠ Network error — check connection.'; err.classList.add('visible');
+    btn.textContent = 'लॉगिन करें | Login →'; btn.disabled = false;
   }
 }
 
-document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+if (localStorage.getItem('asha_token')) {
+  window.location.href = localStorage.getItem('asha_role') === 'block_officer' ? '/officer' : '/app';
+}
 </script>
-{% endblock %}
+</body>
+</html>

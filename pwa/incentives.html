@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#1a3a6b">
+<link rel="manifest" href="manifest.json">
+<title>Incentives — ASHA Saheli</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+.summary-card {
+  margin: 14px 14px 0;
+  background: var(--navy); border-radius: var(--radius);
+  padding: 16px; color: #fff;
+}
+.summary-total { font-size: 11px; color: rgba(255,255,255,.65); margin-bottom: 2px; }
+.summary-amount { font-size: 34px; font-weight: 700; line-height: 1; margin-bottom: 12px; }
+.summary-row { display: flex; gap: 10px; }
+.summary-pill {
+  flex: 1; background: rgba(255,255,255,.1);
+  border-radius: var(--radius); padding: 9px 10px; text-align: center;
+}
+.summary-pill .val { font-size: 18px; font-weight: 700; }
+.summary-pill .lbl { font-size: 10px; color: rgba(255,255,255,.65); margin-top: 1px; }
+.verified-val { color: #86EFAC; }
+.pending-val  { color: #FDE68A; }
+
+.incentive-item {
+  margin: 0 14px 8px;
+  background: #fff; border: 1px solid var(--border);
+  border-radius: var(--radius); border-left: 4px solid var(--border);
+  padding: 12px 14px;
+  display: flex; align-items: flex-start; gap: 12px;
+}
+.incentive-item.verified { border-left-color: var(--india-green); }
+.incentive-item.pending  { border-left-color: #CA8A04; }
+
+.ii-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+.ii-body { flex: 1; min-width: 0; }
+.ii-type   { font-size: 13px; font-weight: 700; }
+.ii-patient{ font-size: 11.5px; color: var(--muted); margin-top: 1px; }
+.ii-date   { font-size: 11px; color: #A0AEC0; margin-top: 2px; }
+.ii-right  { text-align: right; flex-shrink: 0; }
+.ii-amount { font-size: 16px; font-weight: 700; color: var(--navy); }
+.ii-status {
+  display: inline-block; margin-top: 4px;
+  font-size: 10px; font-weight: 700; padding: 2px 7px;
+  border-radius: 10px; letter-spacing: .3px;
+}
+.ii-status.verified { background: #F0FDF4; color: var(--india-green); border: 1px solid #86EFAC; }
+.ii-status.pending  { background: var(--yellow-bg); color: #854D0E; border: 1px solid #FDE047; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="topbar-back" onclick="history.back()">←</button>
+  <div style="flex:1;">
+    <div class="topbar-title">JSY प्रोत्साहन | Incentives</div>
+    <div class="topbar-sub">Janani Suraksha Yojana earnings</div>
+  </div>
+  <div class="sync-badge synced">✓ Synced</div>
+</div>
+<div class="tricolor"></div>
+
+<div class="main">
+
+  <!-- SUMMARY -->
+  <div class="summary-card">
+    <div class="summary-total">कुल अर्जित | Total Earned (FY 2025–26)</div>
+    <div class="summary-amount">₹ 2,800</div>
+    <div class="summary-row">
+      <div class="summary-pill">
+        <div class="val verified-val">₹ 1,400</div>
+        <div class="lbl">✓ Verified</div>
+      </div>
+      <div class="summary-pill">
+        <div class="val pending-val">₹ 1,400</div>
+        <div class="lbl">⏳ Pending</div>
+      </div>
+      <div class="summary-pill">
+        <div class="val">7</div>
+        <div class="lbl">Events</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">प्रोत्साहन इवेंट | Incentive Events</div>
+
+  <div class="incentive-item verified">
+    <div class="ii-icon">🤰</div>
+    <div class="ii-body">
+      <div class="ii-type">ANC Registration</div>
+      <div class="ii-patient">Radha Sharma · MP-BPL-0155</div>
+      <div class="ii-date">10 Apr 2026</div>
+    </div>
+    <div class="ii-right">
+      <div class="ii-amount">₹ 250</div>
+      <div class="ii-status verified">Verified</div>
+    </div>
+  </div>
+
+  <div class="incentive-item verified">
+    <div class="ii-icon">🏥</div>
+    <div class="ii-body">
+      <div class="ii-type">Institutional Delivery</div>
+      <div class="ii-patient">Kavita Devi · MP-BPL-0098</div>
+      <div class="ii-date">02 Apr 2026</div>
+    </div>
+    <div class="ii-right">
+      <div class="ii-amount">₹ 600</div>
+      <div class="ii-status verified">Verified</div>
+    </div>
+  </div>
+
+  <div class="incentive-item verified">
+    <div class="ii-icon">🤰</div>
+    <div class="ii-body">
+      <div class="ii-type">ANC Registration</div>
+      <div class="ii-patient">Aarti Bai · MP-BPL-0140</div>
+      <div class="ii-date">28 Mar 2026</div>
+    </div>
+    <div class="ii-right">
+      <div class="ii-amount">₹ 250</div>
+      <div class="ii-status verified">Verified</div>
+    </div>
+  </div>
+
+  <div class="incentive-item verified">
+    <div class="ii-icon">💊</div>
+    <div class="ii-body">
+      <div class="ii-type">Iron-Folic Acid Distribution</div>
+      <div class="ii-patient">Meena Yadav · MP-BPL-0112</div>
+      <div class="ii-date">15 Mar 2026</div>
+    </div>
+    <div class="ii-right">
+      <div class="ii-amount">₹ 300</div>
+      <div class="ii-status verified">Verified</div>
+    </div>
+  </div>
+
+  <div class="incentive-item pending">
+    <div class="ii-icon">🏥</div>
+    <div class="ii-body">
+      <div class="ii-type">Institutional Delivery</div>
+      <div class="ii-patient">Sita Kumari · MP-BPL-0119</div>
+      <div class="ii-date">22 Apr 2026 · Pending ANM verification</div>
+    </div>
+    <div class="ii-right">
+      <div class="ii-amount">₹ 600</div>
+      <div class="ii-status pending">Pending</div>
+    </div>
+  </div>
+
+  <div class="incentive-item pending">
+    <div class="ii-icon">🤰</div>
+    <div class="ii-body">
+      <div class="ii-type">ANC Visit (4th contact)</div>
+      <div class="ii-patient">Meena Yadav · MP-BPL-0112</div>
+      <div class="ii-date">25 Apr 2026 · Pending upload</div>
+    </div>
+    <div class="ii-right">
+      <div class="ii-amount">₹ 300</div>
+      <div class="ii-status pending">Pending</div>
+    </div>
+  </div>
+
+  <div class="incentive-item pending">
+    <div class="ii-icon">👶</div>
+    <div class="ii-body">
+      <div class="ii-type">SAM Referral (Child)</div>
+      <div class="ii-patient">Raju M/8mo · MP-BPL-0131</div>
+      <div class="ii-date">29 Apr 2026 · Pending NRC admission</div>
+    </div>
+    <div class="ii-right">
+      <div class="ii-amount">₹ 500</div>
+      <div class="ii-status pending">Pending</div>
+    </div>
+  </div>
+
+  <div style="margin:14px 14px 4px;padding:10px 12px;background:#F0FDF4;border:1px solid #86EFAC;border-radius:var(--radius);font-size:12px;color:#14532D;line-height:1.6;">
+    ℹ️ Payments are processed by Block Health Officer. For queries contact ANM at PHC Berasia.
+  </div>
+
+  <div style="text-align:center;padding:16px 14px 8px;font-size:10.5px;color:#A0AEC0;line-height:1.7;">
+    JSY · NHM · MoHFW · Government of India<br>
+    ASHA ID: MP-BPL-0042 · Sub-centre: SC-BPL-004
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <button class="bnav-item" onclick="window.location.href='dashboard.html'"><span class="bnav-icon">🏠</span><span class="bnav-label">Home</span></button>
+  <button class="bnav-item" onclick="window.location.href='new-patient.html'"><span class="bnav-icon">➕</span><span class="bnav-label">New Patient</span></button>
+  <button class="bnav-item" onclick="window.location.href='visit.html'"><span class="bnav-icon">📋</span><span class="bnav-label">Log Visit</span></button>
+  <button class="bnav-item active"><span class="bnav-icon">💰</span><span class="bnav-label">Incentives</span></button>
+  <button class="bnav-item"><span class="bnav-icon">🔄</span><span class="bnav-label">Sync</span></button>
+</nav>
+<div id="toast"></div>
+
+<script>
+if (!localStorage.getItem('asha_token')) window.location.href = 'login.html';
+</script>
+</body>
+</html>

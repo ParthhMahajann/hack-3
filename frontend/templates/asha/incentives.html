@@ -1,51 +1,117 @@
 {% extends "base.html" %}
 {% block title %}Incentives — ASHA Saheli{% endblock %}
-{% block topbar_sub %}My Earnings (JSY / JSSK){% endblock %}
+{% block topbar_back %}<button class="topbar-back" onclick="history.back()">←</button>{% endblock %}
+{% block topbar_sub %}JSY प्रोत्साहन | Janani Suraksha Yojana{% endblock %}
+
+{% block head %}
+<style>
+.summary-card {
+  margin: 14px 14px 0;
+  background: var(--navy); border-radius: var(--radius);
+  padding: 16px; color: #fff;
+}
+.summary-total { font-size: 11px; color: rgba(255,255,255,.65); margin-bottom: 2px; }
+.summary-amount { font-size: 34px; font-weight: 700; line-height: 1; margin-bottom: 12px; }
+.summary-row { display: flex; gap: 10px; }
+.summary-pill {
+  flex: 1; background: rgba(255,255,255,.1);
+  border-radius: var(--radius); padding: 9px 10px; text-align: center;
+}
+.summary-pill .val { font-size: 18px; font-weight: 700; }
+.summary-pill .lbl { font-size: 10px; color: rgba(255,255,255,.65); margin-top: 1px; }
+.verified-val { color: #86EFAC; }
+.pending-val  { color: #FDE68A; }
+
+.incentive-item {
+  margin: 0 14px 8px;
+  background: #fff; border: 1px solid var(--border);
+  border-radius: var(--radius); border-left: 4px solid var(--border);
+  padding: 12px 14px;
+  display: flex; align-items: flex-start; gap: 12px;
+}
+.incentive-item.verified { border-left-color: var(--india-green); }
+.incentive-item.pending  { border-left-color: #CA8A04; }
+.ii-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+.ii-body { flex: 1; min-width: 0; }
+.ii-type   { font-size: 13px; font-weight: 700; }
+.ii-patient{ font-size: 11.5px; color: var(--muted); margin-top: 1px; }
+.ii-date   { font-size: 11px; color: #A0AEC0; margin-top: 2px; }
+.ii-right  { text-align: right; flex-shrink: 0; }
+.ii-amount { font-size: 16px; font-weight: 700; color: var(--navy); }
+.ii-status {
+  display: inline-block; margin-top: 4px;
+  font-size: 10px; font-weight: 700; padding: 2px 7px;
+  border-radius: 10px; letter-spacing: .3px;
+}
+.ii-status.verified { background: #F0FDF4; color: var(--india-green); border: 1px solid #86EFAC; }
+.ii-status.pending  { background: var(--yellow-bg); color: #854D0E; border: 1px solid #FDE047; }
+
+.rate-card { margin: 14px; background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+.rate-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #F3F4F6; font-size: 12.5px; }
+.rate-row:last-child { border-bottom: none; }
+.rate-label { color: var(--muted); }
+.rate-amount { font-weight: 700; color: var(--navy); }
+</style>
+{% endblock %}
 
 {% block content %}
-<!-- Summary tiles -->
-<div class="stats-grid" style="grid-template-columns:1fr 1fr 1fr;">
-  <div class="stat-tile incentive-tile">
-    <div class="stat-num" id="total-earned">₹—</div>
-    <div class="stat-label">Total Earned</div>
-  </div>
-  <div class="stat-tile">
-    <div class="stat-num" style="color:#2e7d32;" id="total-verified">₹—</div>
-    <div class="stat-label">Verified</div>
-  </div>
-  <div class="stat-tile alert-tile">
-    <div class="stat-num" id="pending-payment">₹—</div>
-    <div class="stat-label">Pending</div>
-  </div>
-</div>
-
-<div class="card">
-  <div class="section-title">Incentive Rate Card (MOHFW Guidelines)</div>
-  <div style="font-size:0.8rem;line-height:1.9;color:#555;">
-    <div class="flex-between"><span>JSY Institutional Delivery (Rural)</span><strong>₹1,400</strong></div>
-    <div class="flex-between"><span>JSY Institutional Delivery (Urban)</span><strong>₹1,000</strong></div>
-    <div class="flex-between"><span>ANC Registration</span><strong>₹300</strong></div>
-    <div class="flex-between"><span>4th ANC Contact</span><strong>₹300</strong></div>
-    <div class="flex-between"><span>Immunisation (per session)</span><strong>₹150</strong></div>
-    <div class="flex-between"><span>Referral Escort</span><strong>₹250</strong></div>
-    <div class="flex-between"><span>NRC Admission</span><strong>₹500</strong></div>
-    <div class="flex-between"><span>VHND Session</span><strong>₹200</strong></div>
+<!-- SUMMARY CARD -->
+<div class="summary-card" id="summary-card">
+  <div class="summary-total">कुल अर्जित | Total Earned (FY 2025–26)</div>
+  <div class="summary-amount" id="sum-total">₹ —</div>
+  <div class="summary-row">
+    <div class="summary-pill">
+      <div class="val verified-val" id="sum-verified">₹ —</div>
+      <div class="lbl">✓ Verified</div>
+    </div>
+    <div class="summary-pill">
+      <div class="val pending-val" id="sum-pending">₹ —</div>
+      <div class="lbl">⏳ Pending</div>
+    </div>
+    <div class="summary-pill">
+      <div class="val" id="sum-events">—</div>
+      <div class="lbl">Events</div>
+    </div>
   </div>
 </div>
 
-<div class="section-title">Event Log</div>
+<!-- RATE CARD -->
+<div class="section-label">📋 JSY Rate Card (MOHFW Guidelines)</div>
+<div class="rate-card">
+  <div class="rate-row"><span class="rate-label">JSY Institutional Delivery (Rural)</span><span class="rate-amount">₹1,400</span></div>
+  <div class="rate-row"><span class="rate-label">JSY Institutional Delivery (Urban)</span><span class="rate-amount">₹1,000</span></div>
+  <div class="rate-row"><span class="rate-label">ANC Registration</span><span class="rate-amount">₹300</span></div>
+  <div class="rate-row"><span class="rate-label">4th ANC Contact</span><span class="rate-amount">₹300</span></div>
+  <div class="rate-row"><span class="rate-label">Immunisation (per session)</span><span class="rate-amount">₹150</span></div>
+  <div class="rate-row"><span class="rate-label">Referral Escort</span><span class="rate-amount">₹250</span></div>
+  <div class="rate-row"><span class="rate-label">NRC Admission</span><span class="rate-amount">₹500</span></div>
+  <div class="rate-row"><span class="rate-label">VHND Session</span><span class="rate-amount">₹200</span></div>
+</div>
+
+<!-- EVENT LIST -->
+<div class="section-label">प्रोत्साहन इवेंट | Incentive Events</div>
 <div id="incentive-list">
-  <div class="empty-state"><div class="empty-icon">⏳</div>Loading…</div>
+  <div style="text-align:center;padding:32px 14px;color:var(--muted);">
+    <div style="font-size:28px;margin-bottom:8px;">⏳</div>Loading…
+  </div>
+</div>
+
+<div style="margin:14px 14px 4px;padding:10px 12px;background:#F0FDF4;border:1px solid #86EFAC;border-radius:var(--radius);font-size:12px;color:#14532D;line-height:1.6;">
+  ℹ️ Payments are processed by Block Health Officer. For queries contact ANM at PHC.
+</div>
+
+<div style="text-align:center;padding:16px 14px 8px;font-size:10.5px;color:#A0AEC0;line-height:1.7;">
+  JSY · NHM · MoHFW · Government of India
 </div>
 {% endblock %}
 
 {% block bottom_nav %}
 <nav class="bottom-nav">
-  <a class="nav-item" href="/app"><div class="nav-icon">🏠</div>Home</a>
-  <a class="nav-item" href="/app/patient/new"><div class="nav-icon">➕</div>New Patient</a>
-  <a class="nav-item" href="/app/visit/new"><div class="nav-icon">📋</div>Log Visit</a>
-  <a class="nav-item active" href="/app/incentives"><div class="nav-icon">💰</div>Incentives</a>
-  <a class="nav-item" onclick="SyncManager.triggerManualSync();return false;" href="#"><div class="nav-icon">🔄</div>Sync</a>
+  <button class="bnav-item" onclick="window.location.href='/app'"><span class="bnav-icon">🏠</span><span class="bnav-label">Home</span></button>
+  <button class="bnav-item" onclick="window.location.href='/app/patient/new'"><span class="bnav-icon">➕</span><span class="bnav-label">New Patient</span></button>
+  <button class="bnav-item" onclick="window.location.href='/app/visit/new'"><span class="bnav-icon">📋</span><span class="bnav-label">Log Visit</span></button>
+  <button class="bnav-item active"><span class="bnav-icon">💰</span><span class="bnav-label">Incentives</span></button>
+  <button class="bnav-item" onclick="SyncManager.triggerManualSync();return false;"><span class="bnav-icon">🔄</span><span class="bnav-label">Sync</span></button>
 </nav>
 {% endblock %}
 
@@ -54,46 +120,58 @@
 const token = localStorage.getItem('asha_token');
 if (!token) window.location.href = '/';
 
+const TYPE_LABELS = {
+  jsy_delivery_rural: '🏥 JSY Delivery (Rural)',
+  jsy_delivery_urban: '🏥 JSY Delivery (Urban)',
+  anc_registration: '🤰 ANC Registration',
+  anc_4th_contact: '🤰 ANC 4th Contact',
+  imm_bcg: '💊 BCG Immunisation',
+  imm_penta: '💊 Penta Immunisation',
+  imm_measles: '💊 Measles Immunisation',
+  referral_escort: '🚑 Referral Escort',
+  nrc_admission: '👶 NRC Admission',
+  vhnd_session: '🏥 VHND Session',
+};
+const TYPE_ICONS = {
+  jsy_delivery_rural: '🏥', jsy_delivery_urban: '🏥',
+  anc_registration: '🤰', anc_4th_contact: '🤰',
+  imm_bcg: '💊', imm_penta: '💊', imm_measles: '💊',
+  referral_escort: '🚑', nrc_admission: '👶', vhnd_session: '🏥',
+};
+
 async function loadIncentives() {
   try {
     const r = await fetch('/dashboard/incentives', { headers: { Authorization: `Bearer ${token}` } });
     if (!r.ok) return;
     const d = await r.json();
 
-    document.getElementById('total-earned').textContent = '₹' + d.total_earned.toLocaleString('en-IN');
-    document.getElementById('total-verified').textContent = '₹' + d.total_verified.toLocaleString('en-IN');
-    document.getElementById('pending-payment').textContent = '₹' + d.pending_payment.toLocaleString('en-IN');
+    document.getElementById('sum-total').textContent = '₹ ' + d.total_earned.toLocaleString('en-IN');
+    document.getElementById('sum-verified').textContent = '₹ ' + d.total_verified.toLocaleString('en-IN');
+    document.getElementById('sum-pending').textContent = '₹ ' + d.pending_payment.toLocaleString('en-IN');
+    document.getElementById('sum-events').textContent = d.events.length;
 
     const list = document.getElementById('incentive-list');
     if (!d.events.length) {
-      list.innerHTML = '<div class="empty-state"><div class="empty-icon">💰</div><p>No incentive events yet.</p></div>';
+      list.innerHTML = '<div style="text-align:center;padding:32px 14px;color:var(--muted);"><div style="font-size:28px;margin-bottom:8px;">💰</div>No incentive events yet.</div>';
       return;
     }
-    const typeLabels = {
-      jsy_delivery_rural: 'JSY Delivery (Rural)',
-      jsy_delivery_urban: 'JSY Delivery (Urban)',
-      anc_registration: 'ANC Registration',
-      anc_4th_contact: 'ANC 4th Contact',
-      imm_bcg: 'BCG Immunisation',
-      imm_penta: 'Penta Immunisation',
-      imm_measles: 'Measles Immunisation',
-      referral_escort: 'Referral Escort',
-      nrc_admission: 'NRC Admission',
-      vhnd_session: 'VHND Session',
-    };
-    list.innerHTML = d.events.map(e => `
-      <div class="card" style="margin-bottom:0.5rem;">
-        <div class="flex-between">
-          <div>
-            <div class="text-bold" style="font-size:0.9rem;">${typeLabels[e.type] || e.type}</div>
-            <div class="text-sm" style="color:#555;">${e.patient_name} · ${e.event_date}</div>
-          </div>
-          <div style="text-align:right;">
-            <div class="text-bold" style="font-size:1.1rem;color:#0f4c35;">₹${e.amount}</div>
-            <div class="text-sm">${e.verified ? '<span style="color:#2e7d32;">✓ Verified</span>' : '<span style="color:#e65100;">Pending</span>'}</div>
-          </div>
+    list.innerHTML = d.events.map(e => {
+      const statusClass = e.verified ? 'verified' : 'pending';
+      const icon = TYPE_ICONS[e.type] || '💰';
+      const label = TYPE_LABELS[e.type] || e.type;
+      return `<div class="incentive-item ${statusClass}">
+        <div class="ii-icon">${icon}</div>
+        <div class="ii-body">
+          <div class="ii-type">${label}</div>
+          <div class="ii-patient">${e.patient_name}</div>
+          <div class="ii-date">${e.event_date}${!e.verified ? ' · Pending verification' : ''}</div>
         </div>
-      </div>`).join('');
+        <div class="ii-right">
+          <div class="ii-amount">₹ ${e.amount}</div>
+          <div class="ii-status ${statusClass}">${e.verified ? 'Verified' : 'Pending'}</div>
+        </div>
+      </div>`;
+    }).join('');
   } catch (e) {
     console.error(e);
   }

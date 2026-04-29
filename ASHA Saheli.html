@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ASHA Saheli — डिजिटल फील्ड डायरी</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #1a3a6b;
+    --navy-dark: #122c54;
+    --saffron: #E87722;
+    --india-green: #138808;
+    --bg: #F5F5F5;
+    --card: #FFFFFF;
+    --text: #1a1a1a;
+    --muted: #555555;
+    --border: #D0D7DE;
+    --risk-critical: #6B21A8;
+    --risk-high: #B91C1C;
+    --risk-medium: #C2410C;
+    --risk-low: #15803D;
+    --offline-yellow: #FEF3C7;
+    --offline-text: #92400E;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans', 'Noto Sans Devanagari', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    max-width: 390px;
+    margin: 0 auto;
+    min-height: 100vh;
+    position: relative;
+    font-size: 14px;
+  }
+
+  /* ── OFFLINE BANNER ── */
+  #offline-banner {
+    background: #FEF3C7;
+    border-bottom: 1px solid #F59E0B;
+    color: var(--offline-text);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 7px 12px;
+    display: none;
+    align-items: center;
+    gap: 6px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  #offline-banner.visible { display: flex; }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--navy);
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  .header-saffron-stripe {
+    background: var(--saffron);
+    height: 4px;
+    width: 100%;
+  }
+
+  .header-inner {
+    padding: 10px 14px 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .emblem {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+  }
+
+  .header-text { flex: 1; min-width: 0; }
+
+  .gov-label {
+    font-size: 9.5px;
+    color: rgba(255,255,255,0.75);
+    letter-spacing: 0.3px;
+    line-height: 1.3;
+    font-family: 'Noto Sans Devanagari', 'Noto Sans', sans-serif;
+  }
+
+  .app-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .app-subtitle {
+    font-size: 10px;
+    color: rgba(255,255,255,0.75);
+    font-family: 'Noto Sans Devanagari', sans-serif;
+    margin-top: 1px;
+  }
+
+  .header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .sync-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    letter-spacing: 0.2px;
+  }
+  .sync-badge.synced { background: #166534; color: #BBF7D0; }
+  .sync-badge.offline { background: #7F1D1D; color: #FECACA; }
+
+  .worker-name {
+    font-size: 11px;
+    color: rgba(255,255,255,0.7);
+  }
+
+  /* ── TRICOLOR STRIP ── */
+  .tricolor-strip {
+    display: flex;
+    height: 9px;
+  }
+  .tricolor-strip span {
+    flex: 1;
+  }
+  .tricolor-strip .tc-saffron { background: #FF9933; }
+  .tricolor-strip .tc-white   { background: #FFFFFF; }
+  .tricolor-strip .tc-green   { background: #138808; }
+
+  /* ── MAIN SCROLL AREA ── */
+  main {
+    padding-bottom: 80px;
+  }
+
+  /* ── SECTION LABELS ── */
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 14px 14px 6px;
+  }
+
+  /* ── STAT GRID ── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 8px 14px 4px;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px 12px 12px;
+    text-align: center;
+  }
+
+  .stat-card .stat-num {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--navy);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-card .stat-num.red { color: var(--risk-high); }
+  .stat-card .stat-num.orange { color: var(--risk-medium); }
+
+  .stat-card .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 500;
+    letter-spacing: 0.2px;
+  }
+
+  /* ── ALERT CARDS ── */
+  .alert-section { padding: 8px 14px 0; }
+
+  .alert-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    border-left-width: 4px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .alert-card.critical { border-left-color: var(--risk-critical); background: #FAF5FF; }
+  .alert-card.high     { border-left-color: var(--risk-high);     background: #FFF5F5; }
+  .alert-card.critical-child { border-left-color: var(--risk-critical); background: #FAF5FF; }
+
+  .alert-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .alert-body { flex: 1; min-width: 0; }
+
+  .alert-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .alert-score {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+
+  .alert-flags {
+    font-size: 11.5px;
+    color: #374151;
+    line-height: 1.4;
+  }
+
+  .risk-badge-sm {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 3px;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    align-self: flex-start;
+    flex-shrink: 0;
+  }
+  .risk-badge-sm.critical { background: #EDE9FE; color: var(--risk-critical); border: 1px solid #C4B5FD; }
+  .risk-badge-sm.high     { background: #FEE2E2; color: var(--risk-high);     border: 1px solid #FECACA; }
+
+  /* ── FILTER CHIPS ── */
+  .filter-row {
+    display: flex;
+    gap: 7px;
+    padding: 12px 14px 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .filter-row::-webkit-scrollbar { display: none; }
+
+  .chip {
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 4px;
+    border: 1.5px solid var(--navy);
+    color: var(--navy);
+    background: transparent;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    font-family: inherit;
+    letter-spacing: 0.2px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .chip.active, .chip:hover {
+    background: var(--navy);
+    color: white;
+  }
+  .chip .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+
+  /* ── PATIENT LIST ── */
+  .patient-list { padding: 0 14px; }
+
+  .patient-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    border-left-width: 4px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: opacity 0.2s;
+  }
+  .patient-card.critical { border-left-color: var(--risk-critical); }
+  .patient-card.high     { border-left-color: var(--risk-high); }
+  .patient-card.medium   { border-left-color: var(--risk-medium); }
+  .patient-card.low      { border-left-color: var(--risk-low); }
+  .patient-card.hidden   { display: none; }
+
+  .patient-header {
+    padding: 11px 12px 8px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .patient-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+  }
+
+  .patient-meta {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .patient-meta .category-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 2px;
+  }
+
+  .patient-edd {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .patient-id-code {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 2px;
+    font-family: monospace;
+    letter-spacing: 0.3px;
+  }
+
+  .patient-risk-col {
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .risk-badge {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 3px 7px;
+    border-radius: 3px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    display: inline-block;
+  }
+  .risk-badge.critical { background: #EDE9FE; color: var(--risk-critical); border: 1px solid #C4B5FD; }
+  .risk-badge.high     { background: #FEE2E2; color: var(--risk-high);     border: 1px solid #FECACA; }
+  .risk-badge.medium   { background: #FFF7ED; color: var(--risk-medium);   border: 1px solid #FED7AA; }
+  .risk-badge.low      { background: #F0FDF4; color: var(--risk-low);      border: 1px solid #BBF7D0; }
+
+  .risk-score-num {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--navy);
+  }
+
+  /* Score bar */
+  .score-bar-wrap {
+    padding: 0 12px 8px;
+  }
+  .score-bar-track {
+    height: 5px;
+    background: #E5E7EB;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .score-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+  .score-bar-fill.critical { background: var(--risk-critical); }
+  .score-bar-fill.high     { background: var(--risk-high); }
+  .score-bar-fill.medium   { background: var(--risk-medium); }
+  .score-bar-fill.low      { background: var(--risk-low); }
+
+  /* Patient action buttons */
+  .patient-actions {
+    display: flex;
+    gap: 7px;
+    padding: 7px 12px 11px;
+    border-top: 1px solid #F3F4F6;
+  }
+
+  .btn {
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 11px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    letter-spacing: 0.2px;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+  .btn:active { opacity: 0.8; }
+  .btn-navy { background: var(--navy); color: white; }
+  .btn-outline {
+    background: transparent;
+    border: 1.5px solid var(--navy);
+    color: var(--navy);
+  }
+  .btn-saffron-outline {
+    background: transparent;
+    border: 1.5px solid var(--saffron);
+    color: var(--saffron);
+  }
+
+  /* ── FOOTER ── */
+  .app-footer {
+    background: var(--navy);
+    color: rgba(255,255,255,0.55);
+    font-size: 10px;
+    text-align: center;
+    padding: 10px 14px;
+    letter-spacing: 0.3px;
+    line-height: 1.6;
+  }
+  .app-footer strong { color: rgba(255,255,255,0.8); }
+
+  /* ── BOTTOM NAV ── */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 390px;
+    max-width: 100vw;
+    background: var(--navy);
+    display: flex;
+    border-top: 3px solid var(--saffron);
+    z-index: 80;
+  }
+
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 4px 10px;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.15s;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+  }
+  .nav-item:active { background: rgba(255,255,255,0.05); }
+
+  .nav-item.active::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 15%;
+    right: 15%;
+    height: 2px;
+    background: var(--saffron);
+    border-radius: 0 0 2px 2px;
+  }
+
+  .nav-icon {
+    font-size: 18px;
+    margin-bottom: 2px;
+    display: block;
+    color: rgba(255,255,255,0.6);
+  }
+  .nav-item.active .nav-icon { color: white; }
+
+  .nav-label {
+    font-size: 10px;
+    color: rgba(255,255,255,0.55);
+    letter-spacing: 0.3px;
+    font-weight: 500;
+  }
+  .nav-item.active .nav-label { color: white; font-weight: 700; }
+
+  /* Sync spin */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .sync-spinning { animation: spin 1s linear infinite; display: inline-block; }
+
+  /* FAB */
+  .fab {
+    position: fixed;
+    bottom: 74px;
+    right: calc(50vw - 195px + 14px);
+    width: 50px;
+    height: 50px;
+    background: var(--navy);
+    color: white;
+    border-radius: 4px;
+    border: none;
+    font-size: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(26,58,107,0.45);
+    z-index: 79;
+    transition: background 0.15s;
+  }
+  .fab:hover { background: var(--navy-dark); }
+  @media (max-width: 390px) {
+    .fab { right: 14px; }
+  }
+
+  /* Scroll */
+  html { scroll-behavior: smooth; }
+</style>
+</head>
+<body>
+
+<!-- OFFLINE BANNER -->
+<div id="offline-banner">
+  <span>⚠</span>
+  <span>आप ऑफलाइन हैं — डेटा सेव हो रहा है &nbsp;|&nbsp; Working Offline</span>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="header-saffron-stripe"></div>
+  <div class="header-inner">
+    <!-- Ashoka Emblem SVG -->
+    <svg class="emblem" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Ashoka Emblem">
+      <!-- Lion capital base -->
+      <rect x="8" y="38" width="28" height="3" rx="1" fill="#E5C97E"/>
+      <!-- Dharma Chakra (wheel) -->
+      <circle cx="22" cy="20" r="12" fill="none" stroke="#E5C97E" stroke-width="1.5"/>
+      <circle cx="22" cy="20" r="4" fill="none" stroke="#E5C97E" stroke-width="1.2"/>
+      <circle cx="22" cy="20" r="1.5" fill="#E5C97E"/>
+      <!-- 24 spokes -->
+      <g stroke="#E5C97E" stroke-width="0.8">
+        <line x1="22" y1="9" x2="22" y2="16"/>
+        <line x1="22" y1="24" x2="22" y2="31"/>
+        <line x1="11" y1="20" x2="18" y2="20"/>
+        <line x1="26" y1="20" x2="33" y2="20"/>
+        <line x1="13.6" y1="11.6" x2="18.5" y2="16.5"/>
+        <line x1="25.5" y1="23.5" x2="30.4" y2="28.4"/>
+        <line x1="30.4" y1="11.6" x2="25.5" y2="16.5"/>
+        <line x1="18.5" y1="23.5" x2="13.6" y2="28.4"/>
+        <line x1="22" y1="9" x2="22" y2="16" transform="rotate(15 22 20)"/>
+        <line x1="22" y1="9" x2="22" y2="16" transform="rotate(30 22 20)"/>
+        <line x1="22" y1="9" x2="22" y2="16" transform="rotate(45 22 20)"/>
+        <line x1="22" y1="9" x2="22" y2="16" transform="rotate(60 22 20)"/>
+        <line x1="22" y1="9" x2="22" y2="16" transform="rotate(75 22 20)"/>
+        <line x1="22" y1="24" x2="22" y2="31" transform="rotate(15 22 20)"/>
+        <line x1="22" y1="24" x2="22" y2="31" transform="rotate(30 22 20)"/>
+        <line x1="22" y1="24" x2="22" y2="31" transform="rotate(45 22 20)"/>
+        <line x1="22" y1="24" x2="22" y2="31" transform="rotate(60 22 20)"/>
+        <line x1="22" y1="24" x2="22" y2="31" transform="rotate(75 22 20)"/>
+      </g>
+      <!-- Lions (simplified) -->
+      <ellipse cx="16" cy="34" rx="3.5" ry="2" fill="#E5C97E"/>
+      <ellipse cx="28" cy="34" rx="3.5" ry="2" fill="#E5C97E"/>
+      <circle cx="15" cy="32" r="2.2" fill="#E5C97E"/>
+      <circle cx="29" cy="32" r="2.2" fill="#E5C97E"/>
+      <!-- Bull & Horse silhouettes simplified -->
+      <rect x="18.5" y="33.5" width="7" height="1.5" rx="0.7" fill="#C9A84C"/>
+    </svg>
+
+    <div class="header-text">
+      <div class="app-name">ASHA Saheli — डिजिटल फील्ड डायरी</div>
+      <div class="app-subtitle">राष्ट्रीय स्वास्थ्य मिशन</div>
+    </div>
+
+    <div class="header-right">
+      <div class="sync-badge synced" id="sync-status-badge">
+        <span>✓</span> Synced
+      </div>
+      <div class="worker-name">Sunita Devi</div>
+    </div>
+  </div>
+  <!-- Tricolor strip below header -->
+  <div class="tricolor-strip">
+    <span class="tc-saffron"></span>
+    <span class="tc-white"></span>
+    <span class="tc-green"></span>
+  </div>
+</header>
+
+<!-- MAIN CONTENT -->
+<main>
+
+  <!-- STAT CARDS -->
+  <div class="section-label">आज का सारांश &nbsp;|&nbsp; Today's Summary</div>
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-num">6</div>
+      <div class="stat-label">मरीज़ | Patients</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num red">3</div>
+      <div class="stat-label">उच्च जोखिम | High Risk</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num orange">3</div>
+      <div class="stat-label">अलर्ट | Alerts</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="font-size:20px;">₹ 1,400</div>
+      <div class="stat-label">JSY लंबित | Pending</div>
+    </div>
+  </div>
+
+  <!-- ALERT CARDS -->
+  <div class="section-label">🔴 सक्रिय अलर्ट | Active Alerts</div>
+  <div class="alert-section">
+
+    <div class="alert-card critical">
+      <div class="alert-icon">🚨</div>
+      <div class="alert-body">
+        <div class="alert-name">Meena Yadav — Score 85/100</div>
+        <div class="alert-flags">Severe anaemia · Pre-eclampsia range BP</div>
+      </div>
+      <span class="risk-badge-sm critical">अति-गंभीर</span>
+    </div>
+
+    <div class="alert-card high">
+      <div class="alert-icon">⚠️</div>
+      <div class="alert-body">
+        <div class="alert-name">Sita Kumari — Score 65/100</div>
+        <div class="alert-flags">Pre-eclampsia BP · Proteinuria ≥2+</div>
+      </div>
+      <span class="risk-badge-sm high">उच्च जोखिम</span>
+    </div>
+
+    <div class="alert-card critical-child">
+      <div class="alert-icon">🚨</div>
+      <div class="alert-body">
+        <div class="alert-name">Raju (M/8mo) — Score 90/100</div>
+        <div class="alert-flags">SAM: MUAC=108mm</div>
+      </div>
+      <span class="risk-badge-sm critical">अति-गंभीर</span>
+    </div>
+
+  </div>
+
+  <!-- FILTER CHIPS -->
+  <div class="filter-row" id="filter-row">
+    <button class="chip active" data-filter="all" onclick="setFilter('all', this)">सभी | All</button>
+    <button class="chip" data-filter="critical" onclick="setFilter('critical', this)">
+      <span class="dot" style="background:var(--risk-critical)"></span> अति-गंभीर
+    </button>
+    <button class="chip" data-filter="high" onclick="setFilter('high', this)">
+      <span class="dot" style="background:var(--risk-high)"></span> उच्च जोखिम
+    </button>
+    <button class="chip" data-filter="maternal" onclick="setFilter('maternal', this)">मातृ | Maternal</button>
+    <button class="chip" data-filter="child" onclick="setFilter('child', this)">शिशु | Child</button>
+  </div>
+
+  <!-- PATIENT LIST -->
+  <div class="section-label">मरीज़ सूची | Patient List</div>
+  <div class="patient-list" id="patient-list">
+
+    <!-- Patient 1 -->
+    <div class="patient-card critical" data-risk="critical" data-type="maternal">
+      <div class="patient-header">
+        <div>
+          <div class="patient-name">Meena Yadav</div>
+          <div class="patient-meta">
+            <span class="category-dot" style="background:#6B21A8"></span>
+            Maternal · H.No. 12, Rampur
+          </div>
+          <div class="patient-edd">EDD: 08 Jun 2025 &nbsp;·&nbsp; G2P1</div>
+          <div class="patient-id-code">Sub-centre: SC-BPL-004 · ID: MP-BPL-0112</div>
+        </div>
+        <div class="patient-risk-col">
+          <div class="risk-badge critical">अति-गंभीर</div>
+          <div class="risk-score-num">85/100</div>
+        </div>
+      </div>
+      <div class="score-bar-wrap">
+        <div class="score-bar-track">
+          <div class="score-bar-fill critical" style="width:85%"></div>
+        </div>
+      </div>
+      <div class="patient-actions">
+        <button class="btn btn-navy">📋 Log Visit</button>
+        <button class="btn btn-outline">📜 History</button>
+        <button class="btn btn-saffron-outline">📞 Call</button>
+      </div>
+    </div>
+
+    <!-- Patient 2 -->
+    <div class="patient-card high" data-risk="high" data-type="maternal">
+      <div class="patient-header">
+        <div>
+          <div class="patient-name">Sita Kumari</div>
+          <div class="patient-meta">
+            <span class="category-dot" style="background:#B91C1C"></span>
+            Maternal · H.No. 7, Khandwa Rd
+          </div>
+          <div class="patient-edd">EDD: 22 Aug 2025 &nbsp;·&nbsp; G1P0</div>
+          <div class="patient-id-code">Sub-centre: SC-BPL-004 · ID: MP-BPL-0119</div>
+        </div>
+        <div class="patient-risk-col">
+          <div class="risk-badge high">उच्च जोखिम</div>
+          <div class="risk-score-num">65/100</div>
+        </div>
+      </div>
+      <div class="score-bar-wrap">
+        <div class="score-bar-track">
+          <div class="score-bar-fill high" style="width:65%"></div>
+        </div>
+      </div>
+      <div class="patient-actions">
+        <button class="btn btn-navy">📋 Log Visit</button>
+        <button class="btn btn-outline">📜 History</button>
+        <button class="btn btn-saffron-outline">📞 Call</button>
+      </div>
+    </div>
+
+    <!-- Patient 3 -->
+    <div class="patient-card critical" data-risk="critical" data-type="child">
+      <div class="patient-header">
+        <div>
+          <div class="patient-name">Raju (M/8mo)</div>
+          <div class="patient-meta">
+            <span class="category-dot" style="background:#6B21A8"></span>
+            Child · H.No. 3, Naya Tola
+          </div>
+          <div class="patient-edd">DOB: 28 Aug 2024 &nbsp;·&nbsp; MUAC: 108mm</div>
+          <div class="patient-id-code">Sub-centre: SC-BPL-004 · ID: MP-BPL-0131</div>
+        </div>
+        <div class="patient-risk-col">
+          <div class="risk-badge critical">अति-गंभीर</div>
+          <div class="risk-score-num">90/100</div>
+        </div>
+      </div>
+      <div class="score-bar-wrap">
+        <div class="score-bar-track">
+          <div class="score-bar-fill critical" style="width:90%"></div>
+        </div>
+      </div>
+      <div class="patient-actions">
+        <button class="btn btn-navy">📋 Log Visit</button>
+        <button class="btn btn-outline">📜 History</button>
+        <button class="btn btn-saffron-outline">📞 Call</button>
+      </div>
+    </div>
+
+    <!-- Patient 4 -->
+    <div class="patient-card medium" data-risk="medium" data-type="maternal">
+      <div class="patient-header">
+        <div>
+          <div class="patient-name">Aarti Bai</div>
+          <div class="patient-meta">
+            <span class="category-dot" style="background:#C2410C"></span>
+            Maternal · H.No. 15, Shivpur
+          </div>
+          <div class="patient-edd">EDD: 14 Oct 2025 &nbsp;·&nbsp; G3P2</div>
+          <div class="patient-id-code">Sub-centre: SC-BPL-004 · ID: MP-BPL-0140</div>
+        </div>
+        <div class="patient-risk-col">
+          <div class="risk-badge medium">निगरानी</div>
+          <div class="risk-score-num">48/100</div>
+        </div>
+      </div>
+      <div class="score-bar-wrap">
+        <div class="score-bar-track">
+          <div class="score-bar-fill medium" style="width:48%"></div>
+        </div>
+      </div>
+      <div class="patient-actions">
+        <button class="btn btn-navy">📋 Log Visit</button>
+        <button class="btn btn-outline">📜 History</button>
+        <button class="btn btn-saffron-outline">📞 Call</button>
+      </div>
+    </div>
+
+    <!-- Patient 5 -->
+    <div class="patient-card low" data-risk="low" data-type="maternal">
+      <div class="patient-header">
+        <div>
+          <div class="patient-name">Radha Sharma</div>
+          <div class="patient-meta">
+            <span class="category-dot" style="background:#15803D"></span>
+            Maternal · H.No. 9, Civil Lines
+          </div>
+          <div class="patient-edd">EDD: 30 Nov 2025 &nbsp;·&nbsp; G1P0</div>
+          <div class="patient-id-code">Sub-centre: SC-BPL-004 · ID: MP-BPL-0155</div>
+        </div>
+        <div class="patient-risk-col">
+          <div class="risk-badge low">सामान्य</div>
+          <div class="risk-score-num">22/100</div>
+        </div>
+      </div>
+      <div class="score-bar-wrap">
+        <div class="score-bar-track">
+          <div class="score-bar-fill low" style="width:22%"></div>
+        </div>
+      </div>
+      <div class="patient-actions">
+        <button class="btn btn-navy">📋 Log Visit</button>
+        <button class="btn btn-outline">📜 History</button>
+        <button class="btn btn-saffron-outline">📞 Call</button>
+      </div>
+    </div>
+
+    <!-- Patient 6 -->
+    <div class="patient-card low" data-risk="low" data-type="child">
+      <div class="patient-header">
+        <div>
+          <div class="patient-name">Priya (F/14mo)</div>
+          <div class="patient-meta">
+            <span class="category-dot" style="background:#15803D"></span>
+            Child · H.No. 21, Krishnapura
+          </div>
+          <div class="patient-edd">DOB: 03 Feb 2024 &nbsp;·&nbsp; Wt: 8.2kg</div>
+          <div class="patient-id-code">Sub-centre: SC-BPL-004 · ID: MP-BPL-0162</div>
+        </div>
+        <div class="patient-risk-col">
+          <div class="risk-badge low">सामान्य</div>
+          <div class="risk-score-num">18/100</div>
+        </div>
+      </div>
+      <div class="score-bar-wrap">
+        <div class="score-bar-track">
+          <div class="score-bar-fill low" style="width:18%"></div>
+        </div>
+      </div>
+      <div class="patient-actions">
+        <button class="btn btn-navy">📋 Log Visit</button>
+        <button class="btn btn-outline">📜 History</button>
+        <button class="btn btn-saffron-outline">📞 Call</button>
+      </div>
+    </div>
+
+  </div><!-- /patient-list -->
+
+  <!-- APP FOOTER -->
+  <div class="app-footer">
+    <strong>NHM · MoHFW · Government of India</strong><br>
+    Version 1.0 &nbsp;|&nbsp; ASHA ID: <strong>MP-BPL-0042</strong> &nbsp;|&nbsp; Sub-centre: SC-BPL-004
+  </div>
+
+</main>
+
+<!-- FAB -->
+<button class="fab" title="New Patient">+</button>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-item active" onclick="setNav(this)">
+    <span class="nav-icon">🏠</span>
+    <span class="nav-label">Home</span>
+  </button>
+  <button class="nav-item" onclick="setNav(this)">
+    <span class="nav-icon">➕</span>
+    <span class="nav-label">New Patient</span>
+  </button>
+  <button class="nav-item" onclick="setNav(this)">
+    <span class="nav-icon">📋</span>
+    <span class="nav-label">Log Visit</span>
+  </button>
+  <button class="nav-item" onclick="setNav(this)">
+    <span class="nav-icon">💰</span>
+    <span class="nav-label">Incentives</span>
+  </button>
+  <button class="nav-item" id="sync-nav" onclick="doSync(this)">
+    <span class="nav-icon" id="sync-icon">🔄</span>
+    <span class="nav-label">Sync</span>
+  </button>
+</nav>
+
+<script>
+  // ── FILTER ──
+  function setFilter(filter, btn) {
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.patient-card').forEach(card => {
+      if (filter === 'all') {
+        card.classList.remove('hidden');
+      } else if (filter === 'critical' || filter === 'high') {
+        card.classList.toggle('hidden', card.dataset.risk !== filter);
+      } else {
+        card.classList.toggle('hidden', card.dataset.type !== filter);
+      }
+    });
+  }
+
+  // ── BOTTOM NAV ──
+  function setNav(btn) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  // ── SYNC ANIMATION ──
+  function doSync(btn) {
+    setNav(btn);
+    const icon = document.getElementById('sync-icon');
+    const badge = document.getElementById('sync-status-badge');
+    icon.classList.add('sync-spinning');
+    badge.className = 'sync-badge offline';
+    badge.innerHTML = '<span>●</span> Syncing…';
+    setTimeout(() => {
+      icon.classList.remove('sync-spinning');
+      badge.className = 'sync-badge synced';
+      badge.innerHTML = '<span>✓</span> Synced';
+    }, 2500);
+  }
+
+  // ── OFFLINE SIMULATION ──
+  function updateOnlineStatus() {
+    const banner = document.getElementById('offline-banner');
+    if (!navigator.onLine) {
+      banner.classList.add('visible');
+      document.getElementById('sync-status-badge').className = 'sync-badge offline';
+      document.getElementById('sync-status-badge').innerHTML = '<span>●</span> Offline';
+    } else {
+      banner.classList.remove('visible');
+    }
+  }
+  window.addEventListener('online', updateOnlineStatus);
+  window.addEventListener('offline', updateOnlineStatus);
+  updateOnlineStatus();
+</script>
+</body>
+</html>
