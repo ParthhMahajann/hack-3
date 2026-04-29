@@ -1,9 +1,11 @@
 # 🌿 ASHA Saheli — Digital Field Diary for Frontline Health Workers
 
-> An offline-first Progressive Web App (PWA) empowering India's 1 million+ ASHA workers with evidence-based risk scoring, ML-powered predictions, and automated incentive tracking.
+> An offline-first Progressive Web App (PWA) + Native Android App empowering India's 1 million+ ASHA workers with evidence-based risk scoring, ML-powered predictions, and automated incentive tracking.
 
 [![Tests](https://img.shields.io/badge/tests-23%2F23%20passed-brightgreen)](#testing)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org)
+[![Android](https://img.shields.io/badge/android-APK%20ready-3DDC84?logo=android&logoColor=white)](#android-app)
+[![Capacitor](https://img.shields.io/badge/capacitor-6.x-119EFF?logo=capacitor&logoColor=white)](https://capacitorjs.com)
 [![License](https://img.shields.io/badge/license-MIT-green)](#license)
 
 ---
@@ -20,7 +22,7 @@ India's **Accredited Social Health Activists (ASHA)** serve as the critical link
 
 ## 💡 Solution
 
-**ASHA Saheli** digitizes the entire ASHA workflow with an **offline-first** approach — every feature works without internet and syncs when connectivity returns.
+**ASHA Saheli** digitizes the entire ASHA workflow with an **offline-first** approach — every feature works without internet and syncs when connectivity returns. It is available both as a **Progressive Web App (PWA)** in any browser and as a **native Android APK** for one-tap installation.
 
 ---
 
@@ -31,6 +33,7 @@ India's **Accredited Social Health Activists (ASHA)** serve as the critical link
 | 🏥 **Risk Scoring Engine** | 16 clinical rules based on WHO ANC 2016, IMNCI 2009, FOGSI 2020 |
 | 🤖 **ML 30-Day Predictor** | Logistic regression model predicting adverse outcomes, calibrated to NFHS-5 |
 | 📱 **Offline-First PWA** | Service Worker + IndexedDB — works in zero-connectivity villages |
+| 🤖 **Native Android App** | Capacitor-powered APK — installable directly on any Android phone |
 | 🔄 **Delta Sync** | CRDT-inspired field-level sync with conflict resolution (Shapiro et al., 2011) |
 | 💰 **Incentive Tracker** | Automated JSY/JSSK calculation per MOHFW 2015 guidelines |
 | 📊 **Officer Dashboard** | Risk distribution charts, ANC coverage, HMIS CSV export |
@@ -44,30 +47,30 @@ India's **Accredited Social Health Activists (ASHA)** serve as the critical link
 ## 🏗️ Architecture
 
 ```
-┌─────────────────────────────────────┐
-│  📱 ASHA Phone (PWA)               │
-│  ├── IndexedDB (patients, visits)   │
-│  ├── Service Worker (CacheFirst)    │
-│  ├── Client-side risk scoring       │
-│  └── Background Sync queue          │
-│              ↕️                      │
-│     (syncs when online)             │
-│              ↕️                      │
-│  🌐 FastAPI Server                  │
-│  ├── SQLAlchemy async (models)      │
-│  ├── Risk Engine (16 rules)         │
-│  ├── ML Predictor (LogReg)          │
-│  ├── NLP Summarizer (EN/HI)        │
-│  ├── Sync Engine (delta merge)      │
-│  ├── Incentive Calculator           │
-│  └── Alert Service (Twilio/in-app)  │
-│              ↕️                      │
-│  🏢 Block Officer Dashboard         │
-│  ├── Chart.js visualizations        │
-│  ├── High-risk patient table        │
-│  ├── Workload forecast API          │
-│  └── HMIS CSV export                │
-└─────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│  📱 ASHA Phone (PWA / Android APK)      │
+│  ├── IndexedDB (patients, visits)        │
+│  ├── Service Worker (CacheFirst)         │
+│  ├── Client-side risk scoring            │
+│  └── Background Sync queue              │
+│              ↕️                          │
+│     (syncs when online)                 │
+│              ↕️                          │
+│  🌐 FastAPI Server (Python)             │
+│  ├── SQLAlchemy async (models)          │
+│  ├── Risk Engine (16 rules)             │
+│  ├── ML Predictor (LogReg)             │
+│  ├── NLP Summarizer (EN/HI)            │
+│  ├── Sync Engine (delta merge)          │
+│  ├── Incentive Calculator              │
+│  └── Alert Service (Twilio/in-app)     │
+│              ↕️                          │
+│  🏢 Block Officer Dashboard             │
+│  ├── Chart.js visualizations            │
+│  ├── High-risk patient table            │
+│  ├── Workload forecast API              │
+│  └── HMIS CSV export                   │
+└─────────────────────────────────────────┘
 ```
 
 ---
@@ -93,7 +96,7 @@ Every clinical threshold is traceable to a published source:
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Web / Backend)
 
 ### Prerequisites
 - Python 3.10+
@@ -113,6 +116,8 @@ pip install -r requirements.txt
 python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
 ```
 
+Open **http://localhost:8000** in your browser.
+
 ### Demo Accounts
 
 | Role | Email | Password |
@@ -120,7 +125,63 @@ python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
 | ASHA Worker | asha1@demo.in | asha123 |
 | Block Officer | officer@demo.in | officer123 |
 
-Open http://localhost:8000 → Click "ASHA Login" or "Officer Login"
+---
+
+## 📱 Android App
+
+The project includes a fully built native Android app powered by **Capacitor 6**. It wraps the PWA inside a native Android WebView container and can be installed directly on any Android device.
+
+### Option A — Build from Source (Android Studio)
+
+**Prerequisites:** Android Studio (with Android SDK), Node.js 18+, JDK 21
+
+```bash
+# Step 1: Install Capacitor dependencies
+cd pwa
+npm install
+
+# Step 2: Sync web assets into the Android project
+npx cap sync android
+
+# Step 3: Open in Android Studio
+npx cap open android
+```
+
+Once Android Studio opens, click the **▶ Run** button to install on your emulator or connected phone.
+
+### Option B — Build APK from Command Line
+
+```bash
+cd pwa/android
+
+# Windows
+.\gradlew assembleDebug
+
+# macOS / Linux
+./gradlew assembleDebug
+```
+
+The final APK will be generated at:
+```
+pwa/android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+### Installing the APK on a Phone
+
+1. Copy `app-debug.apk` to your Android phone.
+2. Tap the file in your phone's File Manager.
+3. If prompted, allow **"Install from Unknown Sources"**.
+4. The **ASHA Saheli** app icon will appear on your home screen.
+
+### Android App Info
+
+| Property | Value |
+|----------|-------|
+| App ID | `com.ashasaheli.app` |
+| Min SDK | Android 7.0 (API 24) |
+| Target SDK | Android 16 (API 36) |
+| Build Tool | Capacitor 6 + Gradle 8.13 |
+| JDK Required | JDK 21 |
 
 ---
 
@@ -143,47 +204,59 @@ python -m pytest tests/ -v
 ```
 hack-3/
 ├── backend/
-│   ├── main.py              # FastAPI app, routes, demo seeding
-│   ├── config.py             # Pydantic Settings (.env)
-│   ├── database.py           # Async SQLAlchemy engine
-│   ├── models.py             # SQLAlchemy models (User, Patient, Visit, Alert, Incentive)
+│   ├── main.py                   # FastAPI app, routes, demo seeding
+│   ├── config.py                  # Pydantic Settings (.env)
+│   ├── database.py                # Async SQLAlchemy engine
+│   ├── models.py                  # SQLAlchemy models
 │   ├── core/
-│   │   ├── risk_engine.py    # 16-rule clinical scoring (WHO/IMNCI)
-│   │   ├── ml_risk_predictor.py  # Logistic regression 30-day forecast
-│   │   ├── nlp_summarizer.py # Bilingual visit summary generator
-│   │   ├── sync_engine.py    # Delta sync with conflict resolution
-│   │   ├── incentive_calculator.py  # JSY/JSSK auto-calculation
-│   │   └── alert_service.py  # Twilio SMS + in-app notifications
+│   │   ├── risk_engine.py         # 16-rule clinical scoring (WHO/IMNCI)
+│   │   ├── ml_risk_predictor.py   # Logistic regression 30-day forecast
+│   │   ├── nlp_summarizer.py      # Bilingual visit summary generator
+│   │   ├── sync_engine.py         # Delta sync with conflict resolution
+│   │   ├── incentive_calculator.py# JSY/JSSK auto-calculation
+│   │   └── alert_service.py       # Twilio SMS + in-app notifications
 │   └── routers/
-│       ├── auth.py           # JWT authentication
-│       ├── patients.py       # Patient CRUD
-│       ├── visits.py         # Visit logging + risk computation
-│       ├── sync.py           # Bidirectional sync endpoint
-│       ├── dashboard.py      # Officer dashboard APIs
-│       └── analytics.py      # Research methodology + workload forecast
+│       ├── auth.py                # JWT authentication
+│       ├── patients.py            # Patient CRUD
+│       ├── visits.py              # Visit logging + risk computation
+│       ├── sync.py                # Bidirectional sync endpoint
+│       ├── dashboard.py           # Officer dashboard APIs
+│       └── analytics.py           # Research methodology + workload forecast
 ├── frontend/
 │   ├── static/
-│   │   ├── css/app.css       # Design system (glassmorphism, animations, dark mode)
-│   │   ├── js/db.js          # IndexedDB offline storage
-│   │   ├── js/sync.js        # Sync coordinator
-│   │   ├── sw.js             # Service Worker (CacheFirst + BackgroundSync)
-│   │   └── manifest.json     # PWA manifest
+│   │   ├── css/app.css            # Design system (glassmorphism, dark mode)
+│   │   ├── js/db.js               # IndexedDB offline storage
+│   │   ├── js/sync.js             # Sync coordinator
+│   │   ├── sw.js                  # Service Worker (CacheFirst + BackgroundSync)
+│   │   └── manifest.json          # PWA manifest
 │   └── templates/
-│       ├── base.html         # App shell with Noto Sans
-│       ├── index.html        # Login page
-│       ├── asha/             # ASHA worker pages
+│       ├── base.html              # App shell
+│       ├── index.html             # Login page
+│       ├── asha/                  # ASHA worker pages
 │       │   ├── dashboard.html
 │       │   ├── patient_form.html
-│       │   ├── visit_form.html  # Hindi bilingual labels + live risk preview
+│       │   ├── visit_form.html    # Hindi bilingual labels + live risk preview
 │       │   ├── incentives.html
-│       │   └── research.html    # 📚 Research methodology page
+│       │   └── research.html      # Research methodology page
 │       └── officer/
-│           └── dashboard.html   # Charts + HMIS export
+│           └── dashboard.html     # Charts + HMIS export
+├── pwa/                           # Android app (Capacitor)
+│   ├── android/                   # Native Android Studio project
+│   │   ├── app/
+│   │   │   ├── src/main/
+│   │   │   │   ├── AndroidManifest.xml
+│   │   │   │   └── java/com/ashasaheli/app/MainActivity.java
+│   │   │   └── build.gradle
+│   │   ├── gradle/wrapper/
+│   │   ├── build.gradle
+│   │   └── variables.gradle
+│   ├── capacitor.config.json      # Capacitor app configuration
+│   └── package.json               # Capacitor npm dependencies
 ├── tests/
-│   ├── test_risk_engine.py   # 16 clinical validation tests
-│   └── test_integration.py   # 7 full-pipeline tests
+│   ├── test_risk_engine.py        # 16 clinical validation tests
+│   └── test_integration.py        # 7 full-pipeline tests
 ├── requirements.txt
-└── .env
+└── README.md
 ```
 
 ---
@@ -196,6 +269,7 @@ hack-3/
 | Database | SQLite + aiosqlite (PostgreSQL-ready) |
 | Frontend | Jinja2 templates, vanilla JS, CSS3 |
 | Offline | Service Worker, IndexedDB, Background Sync API |
+| Android App | Capacitor 6, Gradle 8.13, JDK 21 |
 | ML | Scikit-learn-compatible Logistic Regression |
 | Charts | Chart.js 4.x |
 | Auth | JWT (python-jose) + bcrypt |
@@ -207,9 +281,10 @@ hack-3/
 ## 👨‍💻 Author
 
 **Parth Mahajan**
+- GitHub: [@ParthhMahajann](https://github.com/ParthhMahajann)
 
 ---
 
 ## 📄 License
 
-This project is open source under the MIT License.
+This project is open source under the **MIT License**.
