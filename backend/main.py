@@ -70,6 +70,17 @@ async def visit_form(request: Request):
     return templates.TemplateResponse("asha/visit_form.html", {"request": request})
 
 
+@app.get("/sw.js")
+async def service_worker():
+    """Service Worker must be served from root scope, not /static/."""
+    from fastapi.responses import FileResponse
+    return FileResponse(
+        BASE_DIR / "frontend" / "static" / "sw.js",
+        media_type="application/javascript",
+        headers={"Service-Worker-Allowed": "/"},
+    )
+
+
 @app.get("/officer", response_class=HTMLResponse)
 async def officer_dashboard(request: Request):
     return templates.TemplateResponse("officer/dashboard.html", {"request": request})

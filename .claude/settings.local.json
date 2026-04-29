@@ -5,7 +5,27 @@
       "Bash(python -m pytest tests/test_risk_engine.py -v)",
       "Bash(python -c ' *)",
       "Bash(python -c \"from passlib.context import CryptContext; ctx = CryptContext\\(schemes=['bcrypt']\\); h = ctx.hash\\('asha123'\\); print\\('bcrypt OK:', ctx.verify\\('asha123', h\\)\\)\")",
-      "Bash(curl -s -w \"\\\\nHTTP_STATUS:%{http_code}\" http://127.0.0.1:8000/)"
+      "Bash(curl -s -w \"\\\\nHTTP_STATUS:%{http_code}\" http://127.0.0.1:8000/)",
+      "Bash(curl -s -o /dev/null -w \"sw.js: %{http_code}\\\\n\" http://127.0.0.1:8000/sw.js)",
+      "Bash(curl -s -o /dev/null -w \"icon-192: %{http_code}\\\\n\" http://127.0.0.1:8000/static/icons/icon-192.png)",
+      "Bash(curl -s -o /dev/null -w \"icon-512: %{http_code}\\\\n\" http://127.0.0.1:8000/static/icons/icon-512.png)",
+      "Bash(curl -s -o /dev/null -w \"manifest: %{http_code}\\\\n\" http://127.0.0.1:8000/static/manifest.json)",
+      "Bash(pkill -f \"uvicorn backend.main\")",
+      "Bash(python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000)",
+      "Bash(curl -s -o /dev/null -w \"login page: %{http_code}\\\\n\" http://127.0.0.1:8000/)",
+      "Bash(curl -s -o /dev/null -w \"ASHA dashboard: %{http_code}\\\\n\" http://127.0.0.1:8000/app)",
+      "Bash(curl -s -o /dev/null -w \"officer dashboard: %{http_code}\\\\n\" http://127.0.0.1:8000/officer)",
+      "Bash(netstat -ano)",
+      "Bash(kill -9 39524)",
+      "Bash(curl -s -o /dev/null -w \"/ login:      %{http_code}\\\\n\" http://127.0.0.1:8000/)",
+      "Bash(curl -s -o /dev/null -w \"/app:         %{http_code}\\\\n\" http://127.0.0.1:8000/app)",
+      "Bash(curl -s -o /dev/null -w \"/officer:     %{http_code}\\\\n\" http://127.0.0.1:8000/officer)",
+      "Bash(curl -s -o /dev/null -w \"/sw.js:       %{http_code}\\\\n\" http://127.0.0.1:8000/sw.js)",
+      "PowerShell(Stop-Process *)",
+      "Bash(curl -s -o /dev/null -w \"sw.js:    %{http_code}\\\\n\" http://127.0.0.1:8000/sw.js)",
+      "Bash(curl -s -o /dev/null -w \"/app:     %{http_code}\\\\n\" http://127.0.0.1:8000/app)",
+      "Bash(curl -s -o /dev/null -w \"/officer: %{http_code}\\\\n\" http://127.0.0.1:8000/officer)",
+      "Bash(curl -s -o /dev/null -w \"icon:     %{http_code}\\\\n\" http://127.0.0.1:8000/static/icons/icon-192.png)"
     ]
   }
 }
