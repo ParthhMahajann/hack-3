@@ -16,7 +16,6 @@ const SHELL_ASSETS = [
   "/static/css/app.css",
   "/static/js/db.js",
   "/static/js/sync.js",
-  "/static/js/offline.js",
   "/static/manifest.json",
 ];
 

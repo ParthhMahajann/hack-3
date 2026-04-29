@@ -10,17 +10,26 @@ from backend.schemas import VisitCreate, VisitOut
 from backend.routers.auth import get_current_user
 from backend.core.risk_engine import (
     MaternalRiskInput, ChildRiskInput,
-    score_maternal, score_child
+    score_maternal, score_child, _compute_waz
 )
 from backend.core.alert_service import dispatch_risk_alert
 from backend.core.incentive_calculator import calculate_incentives_from_visit
+from backend.core.ml_risk_predictor import (
+    MaternalMLInput, ChildMLInput,
+    predict_maternal_risk, predict_child_risk
+)
 
 router = APIRouter(prefix="/visits", tags=["visits"])
 
 
 def _compute_risk(patient: Patient, vitals: dict, observations: dict) -> dict:
-    """Route to correct scorer based on patient type."""
+    """
+    Route to correct scorer based on patient type.
+    Returns rule-based score + ML 30-day forecast probability.
+    """
+    from backend.core.risk_engine import _linear_slope
     if patient.patient_type == "maternal":
+        bp_history = observations.get("bp_history", [])
         inp = MaternalRiskInput(
             hemoglobin=vitals.get("hemoglobin", 12.0),
             systolic_bp=vitals.get("systolic_bp", 110),
@@ -33,12 +42,30 @@ def _compute_risk(patient: Patient, vitals: dict, observations: dict) -> dict:
             proteinuria_2plus=observations.get("proteinuria_2plus", False),
             fbs=vitals.get("fbs", 0.0),
             bmi_booking=vitals.get("bmi_booking", 22.0),
-            bp_history=observations.get("bp_history", []),
+            bp_history=bp_history,
         )
-        return score_maternal(inp)
+        result = score_maternal(inp)
+        # Add ML forecast
+        ml = predict_maternal_risk(MaternalMLInput(
+            hemoglobin=vitals.get("hemoglobin", 12.0),
+            systolic_bp=vitals.get("systolic_bp", 110),
+            diastolic_bp=vitals.get("diastolic_bp", 70),
+            gestational_week=vitals.get("gestational_week", 20),
+            age=patient.age or 25,
+            missed_anc_visits=observations.get("missed_anc_visits", 0),
+            bp_slope=_linear_slope(bp_history) if len(bp_history) >= 2 else 0.0,
+            bmi_booking=vitals.get("bmi_booking", 22.0),
+            fbs=vitals.get("fbs", 0.0),
+            edema=observations.get("edema_generalised", False),
+            proteinuria=observations.get("proteinuria_2plus", False),
+            prev_complications=observations.get("previous_complications", False),
+        ))
+        result["ml_forecast"] = ml
+        return result
     else:
+        age_months = _age_in_months(patient.birth_date)
         inp = ChildRiskInput(
-            age_months=_age_in_months(patient.birth_date),
+            age_months=age_months,
             muac_mm=vitals.get("muac_mm", 0),
             weight_kg=vitals.get("weight_kg", 0),
             height_cm=vitals.get("height_cm", 0),
@@ -50,7 +77,18 @@ def _compute_risk(patient: Patient, vitals: dict, observations: dict) -> dict:
             breastfeeding_ok=observations.get("breastfeeding_ok", True),
             weight_history=observations.get("weight_history", []),
         )
-        return score_child(inp)
+        result = score_child(inp)
+        waz = _compute_waz(vitals.get("weight_kg", 8.0), age_months, patient.sex or "M") or -1.0
+        ml = predict_child_risk(ChildMLInput(
+            muac_mm=vitals.get("muac_mm", 130),
+            waz_score=waz,
+            age_months=age_months,
+            fever_days=observations.get("fever_days", 0),
+            immunisation_overdue_days=observations.get("immunisation_overdue_days", 0),
+            breastfeeding_ok=observations.get("breastfeeding_ok", True),
+        ))
+        result["ml_forecast"] = ml
+        return result
 
 
 def _age_in_months(birth_date: str | None) -> int:

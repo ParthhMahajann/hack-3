@@ -197,3 +197,86 @@ async def export_hmis_csv(
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=hmis_export.csv"},
     )
+
+
+@router.get("/risk-distribution")
+async def risk_distribution(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Count of patients per risk tier — used for donut chart."""
+    result = await db.execute(select(Patient))
+    patients = result.scalars().all()
+    dist = {"green": 0, "yellow": 0, "red": 0, "purple": 0, "unknown": 0}
+    for p in patients:
+        key = p.current_risk_level or "unknown"
+        dist[key] = dist.get(key, 0) + 1
+    return dist
+
+
+@router.get("/weekly-trend")
+async def weekly_trend(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Average risk score per week for the last 8 weeks — used for line chart."""
+    from datetime import date, timedelta
+    today = date.today()
+    weeks = []
+    for i in range(7, -1, -1):
+        week_start = today - timedelta(days=today.weekday() + 7 * i)
+        week_end   = week_start + timedelta(days=6)
+        result = await db.execute(
+            select(Visit).where(
+                Visit.visit_date >= str(week_start),
+                Visit.visit_date <= str(week_end),
+                Visit.risk_score.isnot(None),
+            )
+        )
+        visits = result.scalars().all()
+        avg_score = round(sum(v.risk_score for v in visits) / len(visits), 1) if visits else 0
+        weeks.append({
+            "week": str(week_start),
+            "label": f"W{8 - i}",
+            "avg_score": avg_score,
+            "visit_count": len(visits),
+        })
+    return weeks
+
+
+@router.get("/anc-coverage")
+async def anc_coverage(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """ANC contact coverage — % of maternal patients with ≥4 ANC visits."""
+    maternal = await db.execute(
+        select(Patient).where(Patient.patient_type == "maternal")
+    )
+    maternal_patients = maternal.scalars().all()
+
+    coverage = []
+    for p in maternal_patients:
+        anc_visits = await db.execute(
+            select(func.count(Visit.id)).where(
+                Visit.patient_id == p.id,
+                Visit.visit_type.in_(["anc", "anc_registration"])
+            )
+        )
+        count = anc_visits.scalar() or 0
+        coverage.append({
+            "patient_id": p.id,
+            "name": p.name,
+            "anc_count": count,
+            "target": 8,
+            "met_minimum": count >= 4,
+        })
+
+    total = len(coverage)
+    met = sum(1 for c in coverage if c["met_minimum"])
+    return {
+        "total_maternal": total,
+        "met_4_contacts": met,
+        "coverage_pct": round(met / total * 100, 1) if total else 0,
+        "patients": coverage,
+    }
