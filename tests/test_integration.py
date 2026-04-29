@@ -147,7 +147,7 @@ async def test_purple_visit_creates_alert(seeded_users):
         alerts = await c.get("/dashboard/alerts",
                              headers={"Authorization": f"Bearer {officer_token}"})
         assert alerts.status_code == 200
-        alert_patient_ids = [a["patient_id"] for a in alerts.json()]
+        alert_patient_ids = [a["patient_id"] for a in alerts.json()["alerts"]]
         assert patient_id in alert_patient_ids, "PURPLE visit did not create a dashboard alert"
 
 
@@ -165,7 +165,7 @@ async def test_green_visit_no_alert(seeded_users):
 
         before_alerts = await c.get("/dashboard/alerts",
                                     headers={"Authorization": f"Bearer {token}"})
-        count_before = len(before_alerts.json())
+        count_before = len(before_alerts.json()["alerts"])
 
         await c.post("/visits/", json={
             "id": "vis-green-" + str(uuid.uuid4())[:6],
@@ -179,7 +179,7 @@ async def test_green_visit_no_alert(seeded_users):
 
         after_alerts = await c.get("/dashboard/alerts",
                                    headers={"Authorization": f"Bearer {token}"})
-        assert len(after_alerts.json()) == count_before, "Green visit should not create an alert"
+        assert len(after_alerts.json()["alerts"]) == count_before, "Green visit should not create an alert"
 
 
 @pytest.mark.asyncio

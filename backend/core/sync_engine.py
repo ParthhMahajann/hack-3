@@ -1,12 +1,25 @@
 """
-Sync Engine — Delta sync with last-write-wins per field.
-Conflict log persisted for ANM review.
+Sync Engine -- Field-level LWW Register merge with conflict logging.
+Implements a practical subset of CRDTs for intermittent connectivity.
 
 Architecture reference:
   Shapiro et al. "A comprehensive study of Convergent and Commutative
-  Replicated Data Types", INRIA RR-7506, 2011 — motivates field-level
-  merge over whole-record overwrite to minimise data loss in
-  intermittently connected deployments.
+  Replicated Data Types", INRIA RR-7506, 2011.
+
+  Specifically we implement a **LWW-Register per field** (Section 3.2.3 of
+  Shapiro et al.):  each field in vitals/observations carries an implicit
+  timestamp from its enclosing record.  When a merge is needed the algorithm
+  iterates every key in both the client and server JSON dicts, keeping the
+  value from whichever side has the later timestamp.  Fields present only on
+  one side are always preserved (union semantics -- equivalent to a Grow-Only
+  Set merge for new keys).
+
+  This is a concrete improvement over whole-record LWW: if ASHA-A records
+  hemoglobin on Device-1 while ASHA-B records blood pressure on Device-2,
+  both values survive the merge.  Under whole-record LWW one would be lost.
+
+  Conflicts (both sides modified the same key to different values) are
+  persisted in SyncConflict for ANM review at the next weekly meeting.
 """
 
 from __future__ import annotations
@@ -17,7 +30,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.models import Visit, Patient, SyncConflict, SyncMeta
 
-# Priority ordering for sync — critical cases synced first
+# Priority ordering for sync -- critical cases synced first
 _LEVEL_PRIORITY = {"purple": 0, "red": 1, "yellow": 2, "green": 3, None: 4}
 
 
@@ -28,6 +41,66 @@ def _priority_key(record: dict) -> int:
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
+
+# ---------------------------------------------------------------------------
+# Field-level LWW merge  (Shapiro et al. Section 3.2.3)
+# ---------------------------------------------------------------------------
+
+def field_level_merge(
+    server_dict: dict,
+    client_dict: dict,
+    server_ts: datetime,
+    client_ts: datetime,
+) -> tuple[dict, list[dict]]:
+    """
+    Merge two JSON dicts (vitals or observations) field by field.
+
+    Rules (LWW-Register per key):
+      - Key only on server  --> keep server value  (no conflict)
+      - Key only on client  --> accept client value (Grow-Only Set union)
+      - Key on both, same value --> keep (no conflict)
+      - Key on both, different value --> keep the *newer* timestamp's value,
+        log a conflict record for the losing value
+
+    Returns:
+        (merged_dict, conflict_list)
+    """
+    merged = dict(server_dict)   # start from server state
+    conflicts: list[dict] = []
+    all_keys = set(list(server_dict.keys()) + list(client_dict.keys()))
+
+    for key in all_keys:
+        s_val = server_dict.get(key)
+        c_val = client_dict.get(key)
+
+        if key not in server_dict:
+            # New field from client -- Grow-Only Set semantics: always accept
+            merged[key] = c_val
+        elif key not in client_dict:
+            # Field only on server -- keep server value (client never had it)
+            pass
+        elif s_val == c_val:
+            # Same value on both sides -- no action needed
+            pass
+        else:
+            # Genuine conflict: same key, different values
+            if client_ts > server_ts:
+                merged[key] = c_val   # client wins
+            # else: server wins, merged already has server value
+
+            conflicts.append({
+                "field": key,
+                "server_value": s_val,
+                "client_value": c_val,
+                "winner": "client" if client_ts > server_ts else "server",
+            })
+
+    return merged, conflicts
+
+
+# ---------------------------------------------------------------------------
+# Main sync entry point
+# ---------------------------------------------------------------------------
 
 async def process_sync_payload(
     device_id: str,
@@ -43,7 +116,7 @@ async def process_sync_payload(
     conflicts: list[dict] = []
     created = updated = 0
 
-    # Sort incoming by risk priority — critical cases first
+    # Sort incoming by risk priority -- critical cases first
     for record in sorted(incoming_records, key=_priority_key):
         entity_type = record.get("entity_type", "visit")
         if entity_type == "visit":
@@ -79,6 +152,10 @@ async def process_sync_payload(
     }
 
 
+# ---------------------------------------------------------------------------
+# Visit upsert with field-level merge
+# ---------------------------------------------------------------------------
+
 async def _upsert_visit(record: dict, device_id: str, db: AsyncSession) -> Any:
     visit_id = record.get("id")
     result = await db.execute(select(Visit).where(Visit.id == visit_id))
@@ -106,41 +183,79 @@ async def _upsert_visit(record: dict, device_id: str, db: AsyncSession) -> Any:
         )
         db.add(visit)
         return "created"
+
+    # ── Field-level LWW merge (Shapiro et al. Section 3.2.3) ──
+    server_ts = (
+        existing.updated_at.replace(tzinfo=timezone.utc)
+        if existing.updated_at
+        else datetime.min.replace(tzinfo=timezone.utc)
+    )
+
+    # Merge vitals and observations dicts field by field
+    merged_vitals, vitals_conflicts = field_level_merge(
+        existing.vitals or {}, record.get("vitals", {}), server_ts, client_ts,
+    )
+    merged_obs, obs_conflicts = field_level_merge(
+        existing.observations or {}, record.get("observations", {}), server_ts, client_ts,
+    )
+
+    all_field_conflicts = vitals_conflicts + obs_conflicts
+
+    # Scalar fields use record-level LWW (newer timestamp wins)
+    newer_ts = max(server_ts, client_ts)
+    if client_ts > server_ts:
+        scalar_risk_level = record.get("risk_level", existing.risk_level)
+        scalar_risk_score = record.get("risk_score", existing.risk_score)
+        scalar_risk_triggered = record.get("risk_triggered", existing.risk_triggered)
+        scalar_gps_lat = record.get("gps_lat", existing.gps_lat)
+        scalar_gps_lng = record.get("gps_lng", existing.gps_lng)
     else:
-        # Last-write-wins per record
-        # If client is newer: accept; if server is newer: conflict logged
-        server_ts = existing.updated_at.replace(tzinfo=timezone.utc) if existing.updated_at else datetime.min.replace(tzinfo=timezone.utc)
+        scalar_risk_level = existing.risk_level
+        scalar_risk_score = existing.risk_score
+        scalar_risk_triggered = existing.risk_triggered
+        scalar_gps_lat = existing.gps_lat
+        scalar_gps_lng = existing.gps_lng
 
-        if client_ts > server_ts:
-            await db.execute(
-                update(Visit)
-                .where(Visit.id == visit_id)
-                .values(
-                    vitals=record.get("vitals", existing.vitals),
-                    observations=record.get("observations", existing.observations),
-                    risk_level=record.get("risk_level", existing.risk_level),
-                    risk_score=record.get("risk_score", existing.risk_score),
-                    risk_triggered=record.get("risk_triggered", existing.risk_triggered),
-                    gps_lat=record.get("gps_lat", existing.gps_lat),
-                    gps_lng=record.get("gps_lng", existing.gps_lng),
-                    synced_at=_utc_now(),
-                    updated_at=client_ts,
-                )
-            )
-            return "updated"
-        else:
-            # Server has newer data — log conflict for ANM review
-            conflict = SyncConflict(
-                entity_type="visit",
-                entity_id=str(visit_id),
-                device_id=device_id,
-                client_payload=record,
-                server_payload=_visit_to_dict(existing),
-                conflict_ts=_utc_now(),
-            )
-            db.add(conflict)
-            return {"entity_id": visit_id, "reason": "server_is_newer"}
+    await db.execute(
+        update(Visit)
+        .where(Visit.id == visit_id)
+        .values(
+            vitals=merged_vitals,
+            observations=merged_obs,
+            risk_level=scalar_risk_level,
+            risk_score=scalar_risk_score,
+            risk_triggered=scalar_risk_triggered,
+            gps_lat=scalar_gps_lat,
+            gps_lng=scalar_gps_lng,
+            synced_at=_utc_now(),
+            updated_at=newer_ts,
+        )
+    )
 
+    # Log per-field conflicts for ANM review
+    if all_field_conflicts:
+        db.add(SyncConflict(
+            entity_type="visit",
+            entity_id=str(visit_id),
+            device_id=device_id,
+            client_payload=record,
+            server_payload=_visit_to_dict(existing),
+            resolved=False,
+            conflict_ts=_utc_now(),
+        ))
+        return {
+            "entity_id": visit_id,
+            "reason": "field_level_merge",
+            "fields_conflicted": len(all_field_conflicts),
+            "details": all_field_conflicts,
+        }
+
+    return "updated"
+
+
+# ---------------------------------------------------------------------------
+# Patient upsert with field-level merge
+# ---------------------------------------------------------------------------
 
 async def _upsert_patient(record: dict, device_id: str, db: AsyncSession) -> Any:
     patient_id = record.get("id")
@@ -170,25 +285,38 @@ async def _upsert_patient(record: dict, device_id: str, db: AsyncSession) -> Any
             birth_date=record.get("birth_date"),
             birth_weight_kg=record.get("birth_weight_kg"),
             device_id=device_id,
+            updated_at=client_ts,
         )
         db.add(patient)
         return "created"
 
-    # Last-write-wins: only accept if client timestamp is newer
-    server_ts = existing.updated_at.replace(tzinfo=timezone.utc) if existing.updated_at else datetime.min.replace(tzinfo=timezone.utc)
-    if client_ts > server_ts:
-        existing.name = record.get("name", existing.name)
-        existing.age = record.get("age", existing.age)
-        existing.address = record.get("address", existing.address)
-        existing.phone = record.get("phone", existing.phone)
-        existing.lmp = record.get("lmp", existing.lmp)
-        existing.edd = record.get("edd", existing.edd)
-        existing.gravida = record.get("gravida", existing.gravida)
-        existing.para = record.get("para", existing.para)
-        existing.updated_at = client_ts
-        return "updated"
-    else:
-        # Server record is newer — log conflict for ANM review
+    # Field-level LWW for patient demographics
+    server_ts = (
+        existing.updated_at.replace(tzinfo=timezone.utc)
+        if existing.updated_at
+        else datetime.min.replace(tzinfo=timezone.utc)
+    )
+
+    patient_fields = {
+        "name": existing.name, "age": existing.age,
+        "address": existing.address, "phone": existing.phone,
+        "lmp": existing.lmp, "edd": existing.edd,
+        "gravida": existing.gravida, "para": existing.para,
+    }
+    client_fields = {k: record.get(k) for k in patient_fields if k in record}
+    merged, conflicts = field_level_merge(patient_fields, client_fields, server_ts, client_ts)
+
+    existing.name = merged.get("name", existing.name)
+    existing.age = merged.get("age", existing.age)
+    existing.address = merged.get("address", existing.address)
+    existing.phone = merged.get("phone", existing.phone)
+    existing.lmp = merged.get("lmp", existing.lmp)
+    existing.edd = merged.get("edd", existing.edd)
+    existing.gravida = merged.get("gravida", existing.gravida)
+    existing.para = merged.get("para", existing.para)
+    existing.updated_at = max(server_ts, client_ts)
+
+    if conflicts:
         db.add(SyncConflict(
             entity_type="patient",
             entity_id=str(patient_id),
@@ -198,8 +326,19 @@ async def _upsert_patient(record: dict, device_id: str, db: AsyncSession) -> Any
                             "updated_at": server_ts.timestamp()},
             conflict_ts=_utc_now(),
         ))
-        return {"entity_id": patient_id, "reason": "server_is_newer"}
+        return {
+            "entity_id": patient_id,
+            "reason": "field_level_merge",
+            "fields_conflicted": len(conflicts),
+            "details": conflicts,
+        }
 
+    return "updated"
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
 async def _get_server_changes(since: datetime, db: AsyncSession) -> list[dict]:
     result = await db.execute(
