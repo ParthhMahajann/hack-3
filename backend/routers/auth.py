@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timedelta, timezone
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -87,13 +87,32 @@ async def register(data: UserCreate, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/token", response_model=TokenResponse)
-async def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: AsyncSession = Depends(get_db),
-):
-    result = await db.execute(select(User).where(User.email == form_data.username))
+async def login(request: Request, db: AsyncSession = Depends(get_db)):
+    """
+    Accept credentials either as:
+      - application/x-www-form-urlencoded (OAuth2PasswordRequestForm compatible)
+      - application/json: {"username": "...", "password": "..."}
+    """
+    content_type = request.headers.get("content-type", "")
+
+    username: str | None = None
+    password: str | None = None
+
+    if "application/json" in content_type:
+        payload = await request.json()
+        username = payload.get("username")
+        password = payload.get("password")
+    else:
+        form = await request.form()
+        username = form.get("username")
+        password = form.get("password")
+
+    if not isinstance(username, str) or not isinstance(password, str):
+        raise HTTPException(status_code=400, detail="Incorrect email or password")
+
+    result = await db.execute(select(User).where(User.email == username))
     user = result.scalar_one_or_none()
-    if not user or not _verify_password(form_data.password, user.hashed_password):
+    if not user or not _verify_password(password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect email or password")
 
     token = _create_token({"sub": user.id, "role": user.role})

@@ -79,7 +79,9 @@ def _compute_risk(patient: Patient, vitals: dict, observations: dict) -> dict:
             weight_history=observations.get("weight_history", []),
         )
         result = score_child(inp)
-        waz = _compute_waz(vitals.get("weight_kg", 8.0), age_months, patient.sex or "M") or -1.0
+        waz = _compute_waz(vitals.get("weight_kg", 8.0), age_months, patient.sex or "M")
+        if waz is None:
+            waz = 0.0  # neutral Z-score for children outside 0–60 month WHO table range
         ml = predict_child_risk(ChildMLInput(
             muac_mm=vitals.get("muac_mm", 130),
             waz_score=waz,

@@ -88,30 +88,58 @@ async def high_risk_patients(
 async def get_alerts(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
+    page: int = 1,
+    page_size: int = 20,
 ):
+    """Paginated unacknowledged alerts. page=1, page_size=20 by default."""
+    offset = (page - 1) * page_size
     stmt = (
         select(RiskAlert, Patient.name)
         .join(Patient, RiskAlert.patient_id == Patient.id)
         .where(RiskAlert.acknowledged == False)
         .order_by(RiskAlert.created_at.desc())
-        .limit(50)
+        .offset(offset)
+        .limit(page_size)
     )
     if current_user.role == "asha":
         stmt = stmt.where(Patient.asha_id == current_user.id)
+
+    # Total count for frontend pagination controls
+    count_stmt = select(func.count()).select_from(
+        select(RiskAlert)
+        .join(Patient, RiskAlert.patient_id == Patient.id)
+        .where(RiskAlert.acknowledged == False)
+        .subquery()
+    )
+    if current_user.role == "asha":
+        count_stmt = select(func.count()).select_from(
+            select(RiskAlert)
+            .join(Patient, RiskAlert.patient_id == Patient.id)
+            .where(and_(RiskAlert.acknowledged == False,
+                        Patient.asha_id == current_user.id))
+            .subquery()
+        )
+
     result = await db.execute(stmt)
+    total = (await db.execute(count_stmt)).scalar() or 0
     rows = result.all()
-    return [
-        {
-            "id": alert.id,
-            "patient_name": name,
-            "patient_id": alert.patient_id,
-            "risk_level": alert.risk_level,
-            "risk_score": alert.risk_score,
-            "triggered_params": alert.triggered_params,
-            "created_at": alert.created_at.isoformat() if alert.created_at else "",
-        }
-        for alert, name in rows
-    ]
+    return {
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "alerts": [
+            {
+                "id": alert.id,
+                "patient_name": name,
+                "patient_id": alert.patient_id,
+                "risk_level": alert.risk_level,
+                "risk_score": alert.risk_score,
+                "triggered_params": alert.triggered_params,
+                "created_at": alert.created_at.isoformat() if alert.created_at else "",
+            }
+            for alert, name in rows
+        ],
+    }
 
 
 @router.post("/alerts/{alert_id}/acknowledge")
@@ -226,27 +254,33 @@ async def weekly_trend(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Average risk score per week for the last 8 weeks — used for line chart."""
+    """Average risk score per week for the last 8 weeks — used for line chart.
+    Uses SQL AVG aggregation (no in-memory load) for scalability.
+    """
     from datetime import date, timedelta
     today = date.today()
     weeks = []
     for i in range(7, -1, -1):
         week_start = today - timedelta(days=today.weekday() + 7 * i)
         week_end   = week_start + timedelta(days=6)
-        result = await db.execute(
-            select(Visit).where(
+        # Single aggregation query — O(1) memory regardless of visit count
+        agg = await db.execute(
+            select(
+                func.avg(Visit.risk_score).label("avg_score"),
+                func.count(Visit.id).label("visit_count"),
+            ).where(
                 Visit.visit_date >= str(week_start),
                 Visit.visit_date <= str(week_end),
                 Visit.risk_score.isnot(None),
             )
         )
-        visits = result.scalars().all()
-        avg_score = round(sum(v.risk_score for v in visits) / len(visits), 1) if visits else 0
+        row = agg.one()
+        avg_score = round(float(row.avg_score), 1) if row.avg_score else 0
         weeks.append({
             "week": str(week_start),
             "label": f"W{8 - i}",
             "avg_score": avg_score,
-            "visit_count": len(visits),
+            "visit_count": row.visit_count or 0,
         })
     return weeks
 
@@ -256,28 +290,38 @@ async def anc_coverage(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """ANC contact coverage — % of maternal patients with ≥4 ANC visits."""
-    maternal = await db.execute(
-        select(Patient).where(Patient.patient_type == "maternal")
-    )
-    maternal_patients = maternal.scalars().all()
-
-    coverage = []
-    for p in maternal_patients:
-        anc_visits = await db.execute(
-            select(func.count(Visit.id)).where(
-                Visit.patient_id == p.id,
-                Visit.visit_type.in_(["anc", "anc_registration"])
-            )
+    """ANC contact coverage — % of maternal patients with ≥4 ANC visits.
+    Uses a single LEFT OUTER JOIN + GROUP BY — eliminates N+1 query pattern.
+    """
+    # Single query: all maternal patients + their ANC visit counts
+    result = await db.execute(
+        select(
+            Patient.id,
+            Patient.name,
+            func.count(Visit.id).label("anc_count"),
         )
-        count = anc_visits.scalar() or 0
-        coverage.append({
-            "patient_id": p.id,
-            "name": p.name,
-            "anc_count": count,
+        .outerjoin(
+            Visit,
+            and_(
+                Visit.patient_id == Patient.id,
+                Visit.visit_type.in_(["anc", "anc_registration"]),
+            ),
+        )
+        .where(Patient.patient_type == "maternal")
+        .group_by(Patient.id, Patient.name)
+    )
+    rows = result.all()
+
+    coverage = [
+        {
+            "patient_id": row.id,
+            "name": row.name,
+            "anc_count": row.anc_count,
             "target": 8,
-            "met_minimum": count >= 4,
-        })
+            "met_minimum": row.anc_count >= 4,
+        }
+        for row in rows
+    ]
 
     total = len(coverage)
     met = sum(1 for c in coverage if c["met_minimum"])

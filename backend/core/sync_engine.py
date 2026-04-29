@@ -147,6 +147,8 @@ async def _upsert_patient(record: dict, device_id: str, db: AsyncSession) -> Any
     result = await db.execute(select(Patient).where(Patient.id == patient_id))
     existing = result.scalar_one_or_none()
 
+    client_ts = datetime.fromtimestamp(record.get("updated_at", 0), tz=timezone.utc)
+
     if existing is None:
         patient = Patient(
             id=patient_id,
@@ -171,7 +173,32 @@ async def _upsert_patient(record: dict, device_id: str, db: AsyncSession) -> Any
         )
         db.add(patient)
         return "created"
-    return "updated"
+
+    # Last-write-wins: only accept if client timestamp is newer
+    server_ts = existing.updated_at.replace(tzinfo=timezone.utc) if existing.updated_at else datetime.min.replace(tzinfo=timezone.utc)
+    if client_ts > server_ts:
+        existing.name = record.get("name", existing.name)
+        existing.age = record.get("age", existing.age)
+        existing.address = record.get("address", existing.address)
+        existing.phone = record.get("phone", existing.phone)
+        existing.lmp = record.get("lmp", existing.lmp)
+        existing.edd = record.get("edd", existing.edd)
+        existing.gravida = record.get("gravida", existing.gravida)
+        existing.para = record.get("para", existing.para)
+        existing.updated_at = client_ts
+        return "updated"
+    else:
+        # Server record is newer — log conflict for ANM review
+        db.add(SyncConflict(
+            entity_type="patient",
+            entity_id=str(patient_id),
+            device_id=device_id,
+            client_payload=record,
+            server_payload={"id": existing.id, "name": existing.name,
+                            "updated_at": server_ts.timestamp()},
+            conflict_ts=_utc_now(),
+        ))
+        return {"entity_id": patient_id, "reason": "server_is_newer"}
 
 
 async def _get_server_changes(since: datetime, db: AsyncSession) -> list[dict]:

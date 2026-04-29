@@ -11,10 +11,35 @@ _GDM_FBS = 126
 
 
 def summarise_visit(patient_type, vitals, observations, risk_level, risk_score,
-                    triggered=None, ml_forecast=None, lang="en"):
+                    triggered=None, ml_forecast=None, lang="both"):
+    """
+    Generate a plain-language clinical summary.
+    lang="en"   → English only
+    lang="hi"   → Hindi only
+    lang="both" → bilingual (default, used in API responses)
+    """
     if patient_type == "maternal":
-        return _maternal(vitals, observations, risk_level, risk_score, ml_forecast)
-    return _child(vitals, observations, risk_level, risk_score, ml_forecast)
+        result = _maternal(vitals, observations, risk_level, risk_score, ml_forecast)
+    else:
+        result = _child(vitals, observations, risk_level, risk_score, ml_forecast)
+
+    if lang == "en":
+        return {
+            "summary": result["summary_en"],
+            "key_findings": result["key_findings"],
+            "recommendation": result["recommendation_en"],
+            "ml_forecast": result.get("ml_forecast_en", ""),
+            "urgency": result["urgency"],
+        }
+    if lang == "hi":
+        return {
+            "summary": result["summary_hi"],
+            "key_findings": result["key_findings_hi"],
+            "recommendation": result["recommendation_hi"],
+            "urgency": result["urgency"],
+        }
+    # Default: full bilingual payload
+    return result
 
 
 def _maternal(v, o, level, score, ml):
