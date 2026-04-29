@@ -1,0 +1,53 @@
+# ── Secrets — NEVER commit ────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+*.spec
+
+# ── Virtual environments ──────────────────────────────────────────────────────
+venv/
+.venv/
+env/
+ENV/
+
+# ── Database files ────────────────────────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+
+# ── ML model artefacts ────────────────────────────────────────────────────────
+*.pkl
+*.joblib
+*.h5
+*.pt
+*.pth
+models/trained/
+
+# ── Logs / OS noise ───────────────────────────────────────────────────────────
+*.log
+*.pid
+.DS_Store
+Thumbs.db
+
+# ── Test / coverage ───────────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.sublime-project

@@ -11,20 +11,43 @@ Model: Logistic Regression (scikit-learn)
   - Produces probability + top contributing features
   - Runs server-side in <1ms per prediction
 
+Weight source (in priority order):
+  1. backend/core/trained_weights.json  — produced by scripts/train_ml_model.py
+                                          (real or synthetic-calibrated training)
+  2. Hardcoded arrays below             — calibrated to NFHS-5 India prevalence
+                                          (fallback for zero-config demo mode)
+
+To retrain:  python scripts/train_ml_model.py
+To inspect:  GET /api/methodology  → ml_model section
+
 Research reference:
   Rana et al. "Machine learning for prediction of adverse outcomes in
   high-risk pregnancies", BMC Pregnancy and Childbirth, 2023.
   DOI: 10.1186/s12884-023-05387-5
 
 Training data:
-  Synthetic dataset modelled on NFHS-5 (National Family Health Survey 2019–21)
+  Synthetic dataset modelled on NFHS-5 (National Family Health Survey 2019-21)
   India prevalence rates. In production, retrain on accumulated visit records.
+  See scripts/train_ml_model.py for the full pipeline.
 """
 
 from __future__ import annotations
+import json
 import numpy as np
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional
+
+# ---------------------------------------------------------------------------
+# Auto-load trained weights if scripts/train_ml_model.py has been run
+# ---------------------------------------------------------------------------
+_WEIGHTS_PATH = Path(__file__).resolve().parent / "trained_weights.json"
+_TRAINED: dict = {}
+if _WEIGHTS_PATH.exists():
+    try:
+        _TRAINED = json.loads(_WEIGHTS_PATH.read_text())
+    except Exception:
+        pass  # silently fall back to hardcoded weights
 
 
 # ---------------------------------------------------------------------------
@@ -58,14 +81,13 @@ CHILD_FEATURES = [
 
 
 # ---------------------------------------------------------------------------
-# Synthetic logistic regression weights
+# Logistic regression weights
 # ---------------------------------------------------------------------------
-# These weights are calibrated to NFHS-5 India outcome prevalence data:
-# ~8.5% maternal complications, ~12% child malnutrition severe.
-# Positive weight = increases risk probability.
-# In production: fit model on real accumulated visit data.
+# Source: hardcoded synthetic weights calibrated to NFHS-5 prevalence.
+# Overridden at module load if trained_weights.json exists (see above).
 
-_MATERNAL_WEIGHTS = np.array([
+_MATERNAL_WEIGHTS = np.array(
+    _TRAINED.get("maternal", {}).get("weights") or [
     -0.82,   # hemoglobin: low Hb → higher risk
      0.71,   # systolic_bp: high BP → higher risk
      0.65,   # diastolic_bp
@@ -80,9 +102,12 @@ _MATERNAL_WEIGHTS = np.array([
      0.60,   # proteinuria
      0.70,   # prev_complications
 ])
-_MATERNAL_BIAS = -2.1   # calibrated to ~8.5% base rate
+_MATERNAL_BIAS = float(
+    _TRAINED.get("maternal", {}).get("bias") or -2.1
+)  # calibrated to ~8.5% base rate
 
-_CHILD_WEIGHTS = np.array([
+_CHILD_WEIGHTS = np.array(
+    _TRAINED.get("child", {}).get("weights") or [
     -0.90,   # muac_mm: lower MUAC = higher risk
     -0.75,   # waz_score: lower WAZ = higher risk
     -0.10,   # age_months: younger children more vulnerable
@@ -90,7 +115,10 @@ _CHILD_WEIGHTS = np.array([
      0.45,   # immunisation_overdue_days (scaled)
     -0.30,   # breastfeeding_ok: not breastfeeding = higher risk
 ])
-_CHILD_BIAS = -2.4   # calibrated to ~9% base rate
+_CHILD_BIAS = float(
+    _TRAINED.get("child", {}).get("bias") or -2.4
+)  # calibrated to ~9% base rate
+
 
 
 def _sigmoid(x: float) -> float:

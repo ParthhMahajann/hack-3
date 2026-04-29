@@ -1,0 +1,110 @@
+{
+  "maternal": {
+    "patient_type": "maternal",
+    "feature_names": [
+      "hemoglobin",
+      "systolic_bp",
+      "diastolic_bp",
+      "gestational_week",
+      "age",
+      "gravida",
+      "missed_anc_visits",
+      "bp_slope",
+      "bmi_booking",
+      "fbs",
+      "edema",
+      "proteinuria",
+      "prev_complications"
+    ],
+    "weights": [
+      -1.2860872190674535,
+      0.3822037180311402,
+      0.5572916409344676,
+      -0.005820325532966387,
+      -0.0493708530179465,
+      0.05195928715148563,
+      0.6490582031403409,
+      0.14100307651471092,
+      0.08379378377825955,
+      -0.11468911681205562,
+      0.13171883083770944,
+      0.1545506392489578,
+      0.23523986305031983
+    ],
+    "bias": -0.5211514214947182,
+    "scaler_mean": [
+      10.415600662070476,
+      115.555537239467,
+      75.386111897567,
+      24.30696355167078,
+      26.07904333911137,
+      1.895625,
+      0.71125,
+      -0.009536728171735615,
+      21.210427702049188,
+      89.0873558417327,
+      0.110625,
+      0.058125,
+      0.105625
+    ],
+    "scaler_scale": [
+      1.8165083088488683,
+      18.119530205082043,
+      14.525358107160939,
+      9.235705435446164,
+      6.041600822592179,
+      0.9885498770294743,
+      0.9429334215627285,
+      1.4754531243995805,
+      3.4791027889553994,
+      17.472379861133327,
+      0.3136671952484022,
+      0.23397966658451494,
+      0.3073570551898885
+    ],
+    "auc_roc": 0.891,
+    "n_samples": 2000,
+    "outcome_prevalence": 0.2635,
+    "note": "Trained on synthetic data calibrated to NFHS-5 India prevalence. Retrain on real accumulated visit data from the ASHA Saheli database for production deployment."
+  },
+  "child": {
+    "patient_type": "child",
+    "feature_names": [
+      "muac_mm",
+      "waz_score",
+      "age_months",
+      "fever_days",
+      "immunisation_overdue_days",
+      "breastfeeding_ok"
+    ],
+    "weights": [
+      -0.5344333859634744,
+      -0.3754848922809027,
+      0.01574386708606071,
+      0.3246625063234095,
+      0.1396234195116161,
+      0.1259603652010398
+    ],
+    "bias": -0.15562967484219647,
+    "scaler_mean": [
+      134.7593596022985,
+      -0.7827246347974627,
+      30.093289875784958,
+      2.8491666666666666,
+      6.965,
+      0.13
+    ],
+    "scaler_scale": [
+      18.25724336912626,
+      1.208197603975509,
+      16.962795041180527,
+      3.6216592843919084,
+      17.66914754593449,
+      0.33630343441600863
+    ],
+    "auc_roc": 0.7231,
+    "n_samples": 1500,
+    "outcome_prevalence": 0.1773,
+    "note": "Trained on synthetic data calibrated to NFHS-5 India prevalence. Retrain on real accumulated visit data from the ASHA Saheli database for production deployment."
+  }
+}
