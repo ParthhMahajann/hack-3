@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}ASHA Saheli — Login{% endblock %}
+{% block topbar_sub %}Frontline Health Worker App{% endblock %}
+
+{% block content %}
+<div style="max-width:400px;margin:2rem auto;">
+  <div style="text-align:center;margin-bottom:2rem;">
+    <div style="font-size:4rem;">🌿</div>
+    <h1 style="font-size:1.8rem;color:#0f4c35;font-weight:800;">ASHA Saheli</h1>
+    <p style="color:#757575;margin-top:0.5rem;font-size:0.9rem;">
+      Offline-first field diary for ASHA workers.<br>
+      Log visits, flag risks, sync when connected.
+    </p>
+  </div>
+
+  <div class="card">
+    <div id="login-error" style="color:#c62828;font-size:0.85rem;margin-bottom:0.75rem;display:none;"></div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input type="email" id="email" class="form-control" placeholder="asha1@demo.in" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" id="password" class="form-control" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary btn-full" onclick="doLogin()">Login</button>
+  </div>
+
+  <div class="card" style="background:#e8f5ee;">
+    <div style="font-size:0.8rem;color:#0f4c35;font-weight:600;margin-bottom:0.5rem;">Demo Accounts</div>
+    <div style="font-size:0.8rem;color:#555;line-height:1.8;">
+      <strong>ASHA Worker:</strong> asha1@demo.in / asha123<br>
+      <strong>Block Officer:</strong> officer@demo.in / officer123
+    </div>
+    <div style="display:flex;gap:0.5rem;margin-top:0.75rem;">
+      <button class="btn btn-ghost btn-sm" onclick="fillDemo('asha')">ASHA Login</button>
+      <button class="btn btn-ghost btn-sm" onclick="fillDemo('officer')">Officer Login</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function fillDemo(role) {
+  if (role === 'asha') {
+    document.getElementById('email').value = 'asha1@demo.in';
+    document.getElementById('password').value = 'asha123';
+  } else {
+    document.getElementById('email').value = 'officer@demo.in';
+    document.getElementById('password').value = 'officer123';
+  }
+}
+
+async function doLogin() {
+  const email = document.getElementById('email').value;
+  const pass  = document.getElementById('password').value;
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+
+  const form = new URLSearchParams();
+  form.append('username', email);
+  form.append('password', pass);
+
+  try {
+    const resp = await fetch('/auth/token', { method: 'POST', body: form });
+    if (!resp.ok) { errEl.textContent = 'Invalid email or password'; errEl.style.display = 'block'; return; }
+    const data = await resp.json();
+    localStorage.setItem('asha_token', data.access_token);
+    localStorage.setItem('asha_role', data.role);
+    localStorage.setItem('asha_name', data.name);
+    localStorage.setItem('asha_user_id', data.user_id);
+    window.location.href = data.role === 'block_officer' ? '/officer' : '/app';
+  } catch {
+    errEl.textContent = 'Network error — try again'; errEl.style.display = 'block';
+  }
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+</script>
+{% endblock %}

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install *)",
+      "Bash(python -m pytest tests/test_risk_engine.py -v)",
+      "Bash(python -c ' *)",
+      "Bash(python -c \"from passlib.context import CryptContext; ctx = CryptContext\\(schemes=['bcrypt']\\); h = ctx.hash\\('asha123'\\); print\\('bcrypt OK:', ctx.verify\\('asha123', h\\)\\)\")",
+      "Bash(curl -s -w \"\\\\nHTTP_STATUS:%{http_code}\" http://127.0.0.1:8000/)"
+    ]
+  }
+}

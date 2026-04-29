@@ -1,0 +1,385 @@
+{% extends "base.html" %}
+{% block title %}Log Visit — ASHA Saheli{% endblock %}
+{% block topbar_sub %}Log Patient Visit{% endblock %}
+
+{% block content %}
+<div id="patient-banner" class="card" style="background:#e8f5ee;margin-bottom:1rem;display:none;">
+  <div class="flex-between">
+    <div>
+      <div class="text-bold" id="banner-name">—</div>
+      <div class="text-sm" style="color:#555;" id="banner-detail">—</div>
+    </div>
+    <span class="risk-badge" id="banner-risk">—</span>
+  </div>
+</div>
+
+<!-- Visit type + date -->
+<div class="card">
+  <div class="section-title">Visit Details</div>
+  <div class="form-row">
+    <div class="form-group">
+      <label class="form-label">Visit Type</label>
+      <select class="form-control" id="visit_type" onchange="onVisitTypeChange()">
+        <option value="anc">ANC Visit</option>
+        <option value="anc_registration">ANC Registration</option>
+        <option value="pnc">PNC Visit</option>
+        <option value="delivery">Delivery</option>
+        <option value="home_visit">Home Visit</option>
+        <option value="vhnd">VHND Session</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Date</label>
+      <input type="date" class="form-control" id="visit_date">
+    </div>
+  </div>
+</div>
+
+<!-- Maternal vitals (shown for maternal patients) -->
+<div id="section-maternal" class="card">
+  <div class="section-title">Maternal Vitals (MCP Card)</div>
+  <div class="form-row">
+    <div class="form-group">
+      <label class="form-label">Haemoglobin (g/dL)</label>
+      <input type="number" step="0.1" class="form-control" id="hemoglobin" placeholder="e.g. 10.5"
+             oninput="updateRiskPreview()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Weight (kg)</label>
+      <input type="number" step="0.1" class="form-control" id="weight_kg" placeholder="e.g. 52.0">
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label class="form-label">Systolic BP (mmHg)</label>
+      <input type="number" class="form-control" id="systolic_bp" placeholder="e.g. 120"
+             oninput="updateRiskPreview()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Diastolic BP (mmHg)</label>
+      <input type="number" class="form-control" id="diastolic_bp" placeholder="e.g. 80"
+             oninput="updateRiskPreview()">
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label class="form-label">Gestational Week</label>
+      <input type="number" class="form-control" id="gestational_week" placeholder="e.g. 28">
+    </div>
+    <div class="form-group">
+      <label class="form-label">FBS (mg/dL)</label>
+      <input type="number" class="form-control" id="fbs" placeholder="0 = not tested">
+    </div>
+  </div>
+
+  <div class="section-title">Observations</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
+    <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.9rem;min-height:44px;">
+      <input type="checkbox" id="edema_generalised" onchange="updateRiskPreview()"> Oedema (generalised)
+    </label>
+    <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.9rem;min-height:44px;">
+      <input type="checkbox" id="proteinuria_2plus" onchange="updateRiskPreview()"> Proteinuria ≥2+
+    </label>
+    <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.9rem;min-height:44px;">
+      <input type="checkbox" id="prev_complications"> Previous Complications
+    </label>
+    <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.9rem;min-height:44px;">
+      <input type="checkbox" id="referral_escorted"> Referral Escorted
+    </label>
+  </div>
+  <div class="form-group" style="margin-top:0.75rem;">
+    <label class="form-label">Missed ANC Visits (count)</label>
+    <input type="number" class="form-control" id="missed_anc" placeholder="0" min="0" max="8"
+           oninput="updateRiskPreview()">
+  </div>
+  <div class="form-group" id="delivery-place-wrap" style="display:none;">
+    <label class="form-label">Delivery Place</label>
+    <select class="form-control" id="delivery_place">
+      <option value="institution">Institution (PHC/Hospital)</option>
+      <option value="home">Home</option>
+    </select>
+  </div>
+</div>
+
+<!-- Child vitals -->
+<div id="section-child" class="card" style="display:none;">
+  <div class="section-title">Child Vitals (IMNCI / MCP)</div>
+  <div class="form-row">
+    <div class="form-group">
+      <label class="form-label">MUAC (mm)</label>
+      <input type="number" class="form-control" id="muac_mm" placeholder="e.g. 120"
+             oninput="updateRiskPreview()">
+      <div class="text-sm" style="color:#555;margin-top:0.25rem;">
+        <span style="color:#c62828;">SAM &lt;115</span> ·
+        <span style="color:#e65100;">MAM 115–125</span> ·
+        <span style="color:#2e7d32;">Normal &gt;125</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Weight (kg)</label>
+      <input type="number" step="0.1" class="form-control" id="child_weight" placeholder="e.g. 7.5"
+             oninput="updateRiskPreview()">
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label class="form-label">Temperature (°C)</label>
+      <input type="number" step="0.1" class="form-control" id="temperature" placeholder="e.g. 37.2">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Fever Duration (days)</label>
+      <input type="number" class="form-control" id="fever_days" placeholder="0" min="0"
+             oninput="updateRiskPreview()">
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Immunisation Overdue (days)</label>
+    <input type="number" class="form-control" id="immun_overdue" placeholder="0" min="0"
+           oninput="updateRiskPreview()">
+  </div>
+
+  <div class="section-title" style="color:#c62828;">⚠ IMNCI Danger Signs</div>
+  <div style="background:#fff3f3;padding:0.75rem;border-radius:8px;margin-bottom:0.5rem;">
+    <div class="text-sm" style="margin-bottom:0.5rem;color:#c62828;font-weight:600;">
+      Any ONE sign = IMMEDIATE referral to facility
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.35rem;">
+      <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.85rem;min-height:40px;">
+        <input type="checkbox" class="danger-sign" value="not_able_to_drink" onchange="updateRiskPreview()"> Cannot drink/breastfeed
+      </label>
+      <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.85rem;min-height:40px;">
+        <input type="checkbox" class="danger-sign" value="vomits_everything" onchange="updateRiskPreview()"> Vomits everything
+      </label>
+      <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.85rem;min-height:40px;">
+        <input type="checkbox" class="danger-sign" value="convulsions" onchange="updateRiskPreview()"> Convulsions
+      </label>
+      <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.85rem;min-height:40px;">
+        <input type="checkbox" class="danger-sign" value="lethargic_unconscious" onchange="updateRiskPreview()"> Lethargic / unconscious
+      </label>
+      <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.85rem;min-height:40px;">
+        <input type="checkbox" class="danger-sign" value="severe_chest_indrawing" onchange="updateRiskPreview()"> Severe chest in-drawing
+      </label>
+    </div>
+  </div>
+  <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.9rem;min-height:44px;">
+    <input type="checkbox" id="breastfeeding_ok" checked onchange="updateRiskPreview()"> Breastfeeding OK
+  </label>
+</div>
+
+<!-- Live risk preview -->
+<div class="card" id="risk-preview" style="display:none;">
+  <div class="section-title">Risk Assessment (Live Preview)</div>
+  <div class="flex-between">
+    <span class="risk-badge" id="preview-badge">—</span>
+    <span class="text-bold" id="preview-score" style="font-size:1.2rem;">0/100</span>
+  </div>
+  <div class="risk-bar-wrap mt-1">
+    <div class="risk-bar-track">
+      <div class="risk-bar-fill" id="preview-bar" style="width:0%"></div>
+    </div>
+  </div>
+  <div id="preview-flags" style="margin-top:0.5rem;"></div>
+  <div id="preview-action" style="margin-top:0.5rem;font-size:0.85rem;color:#555;"></div>
+</div>
+
+<!-- Submit -->
+<div class="card">
+  <div style="display:flex;gap:0.75rem;">
+    <button class="btn btn-primary" style="flex:1;" onclick="submitVisit()">
+      💾 Save Visit
+    </button>
+    <button class="btn btn-ghost" onclick="captureGPS()">📍 GPS</button>
+  </div>
+  <div id="gps-status" class="text-sm" style="color:#555;margin-top:0.35rem;"></div>
+  <div id="save-error" style="color:#c62828;font-size:0.85rem;margin-top:0.5rem;display:none;"></div>
+</div>
+{% endblock %}
+
+{% block bottom_nav %}
+<nav class="bottom-nav">
+  <a class="nav-item" href="/app"><div class="nav-icon">🏠</div>Home</a>
+  <a class="nav-item" href="/app/patient/new"><div class="nav-icon">➕</div>New Patient</a>
+  <a class="nav-item active" href="/app/visit/new"><div class="nav-icon">📋</div>Log Visit</a>
+  <a class="nav-item" href="/app/incentives"><div class="nav-icon">💰</div>Incentives</a>
+  <a class="nav-item" onclick="SyncManager.triggerManualSync();return false;" href="#"><div class="nav-icon">🔄</div>Sync</a>
+</nav>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const token = localStorage.getItem('asha_token');
+if (!token) window.location.href = '/';
+
+const params = new URLSearchParams(location.search);
+const patientId = params.get('patient_id');
+const patientType = params.get('type') || 'maternal';
+
+let _gpsLat = null, _gpsLng = null;
+let _patientData = null;
+
+// Set today's date
+document.getElementById('visit_date').value = new Date().toISOString().slice(0, 10);
+
+// Show correct section
+function showSection() {
+  const isMat = patientType === 'maternal';
+  document.getElementById('section-maternal').style.display = isMat ? '' : 'none';
+  document.getElementById('section-child').style.display = isMat ? 'none' : '';
+}
+showSection();
+
+// Load patient info into banner
+async function loadPatient() {
+  if (!patientId) return;
+  try {
+    const r = await fetch(`/patients/${patientId}`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!r.ok) return;
+    _patientData = await r.json();
+    const banner = document.getElementById('patient-banner');
+    banner.style.display = '';
+    document.getElementById('banner-name').textContent = _patientData.name;
+    document.getElementById('banner-detail').textContent =
+      (_patientData.patient_type === 'maternal' ? `EDD: ${_patientData.edd || '—'}` : `DOB: ${_patientData.birth_date || '—'}`);
+    const rl = _patientData.current_risk_level || 'green';
+    const badge = document.getElementById('banner-risk');
+    badge.textContent = rl.toUpperCase();
+    badge.className = `risk-badge risk-${rl}`;
+  } catch {}
+}
+loadPatient();
+
+// GPS capture
+async function captureGPS() {
+  const el = document.getElementById('gps-status');
+  el.textContent = 'Locating…';
+  navigator.geolocation.getCurrentPosition(
+    pos => { _gpsLat = pos.coords.latitude; _gpsLng = pos.coords.longitude; el.textContent = `📍 ${_gpsLat.toFixed(4)}, ${_gpsLng.toFixed(4)}`; },
+    err => { el.textContent = 'GPS unavailable'; }
+  );
+}
+
+function onVisitTypeChange() {
+  const vt = document.getElementById('visit_type').value;
+  document.getElementById('delivery-place-wrap').style.display = vt === 'delivery' ? '' : 'none';
+}
+
+// Live risk preview (offline, mirrors Python risk_engine.py)
+function updateRiskPreview() {
+  const v = gatherVitals();
+  const o = gatherObservations();
+  const fake = { vitals: v, observations: o, patient_type: patientType };
+  const level = window.AshaDB.computeRiskOffline(fake);
+
+  const scores = { green: 10, yellow: 45, red: 70, purple: 90 };
+  const score = scores[level] || 0;
+  const icons = { green: '✅', yellow: '⚡', red: '⚠️', purple: '🚨' };
+  const actions = {
+    green:  'Routine follow-up. Next visit as scheduled.',
+    yellow: 'Increased monitoring. Inform ANM at next meeting.',
+    red:    'Urgent: Alert ANM. Consider facility referral.',
+    purple: 'EMERGENCY: Refer to PHC/CHC NOW.',
+  };
+
+  const preview = document.getElementById('risk-preview');
+  preview.style.display = '';
+  document.getElementById('preview-badge').textContent = `${icons[level]} ${level.toUpperCase()}`;
+  document.getElementById('preview-badge').className = `risk-badge risk-${level}`;
+  document.getElementById('preview-score').textContent = `${score}/100`;
+  const bar = document.getElementById('preview-bar');
+  bar.style.width = `${score}%`;
+  bar.className = `risk-bar-fill ${level}`;
+  document.getElementById('preview-action').textContent = actions[level] || '';
+}
+
+function gatherVitals() {
+  if (patientType === 'maternal') {
+    return {
+      hemoglobin: parseFloat(document.getElementById('hemoglobin').value) || 12,
+      systolic_bp: parseInt(document.getElementById('systolic_bp').value) || 110,
+      diastolic_bp: parseInt(document.getElementById('diastolic_bp').value) || 70,
+      weight_kg: parseFloat(document.getElementById('weight_kg').value) || 0,
+      gestational_week: parseInt(document.getElementById('gestational_week').value) || 0,
+      fbs: parseFloat(document.getElementById('fbs').value) || 0,
+    };
+  } else {
+    return {
+      muac_mm: parseFloat(document.getElementById('muac_mm').value) || 0,
+      weight_kg: parseFloat(document.getElementById('child_weight').value) || 0,
+      temperature_c: parseFloat(document.getElementById('temperature').value) || 0,
+    };
+  }
+}
+
+function gatherObservations() {
+  if (patientType === 'maternal') {
+    return {
+      edema_generalised: document.getElementById('edema_generalised').checked,
+      proteinuria_2plus: document.getElementById('proteinuria_2plus').checked,
+      previous_complications: document.getElementById('prev_complications').checked,
+      missed_anc_visits: parseInt(document.getElementById('missed_anc').value) || 0,
+      referral_escorted: document.getElementById('referral_escorted').checked,
+      delivery_place: document.getElementById('delivery_place').value,
+    };
+  } else {
+    const dangerSigns = [...document.querySelectorAll('.danger-sign:checked')].map(el => el.value);
+    return {
+      danger_signs: dangerSigns,
+      fever_days: parseInt(document.getElementById('fever_days').value) || 0,
+      immunisation_overdue_days: parseInt(document.getElementById('immun_overdue').value) || 0,
+      breastfeeding_ok: document.getElementById('breastfeeding_ok').checked,
+    };
+  }
+}
+
+async function submitVisit() {
+  const errEl = document.getElementById('save-error');
+  errEl.style.display = 'none';
+
+  if (!patientId) { errEl.textContent = 'No patient selected.'; errEl.style.display = 'block'; return; }
+
+  const visitId = 'vis-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+  const visitData = {
+    id: visitId,
+    patient_id: patientId,
+    patient_type: patientType,
+    visit_type: document.getElementById('visit_type').value,
+    visit_date: document.getElementById('visit_date').value,
+    vitals: gatherVitals(),
+    observations: gatherObservations(),
+    gps_lat: _gpsLat,
+    gps_lng: _gpsLng,
+    updated_at: Date.now() / 1000,
+    entity_type: 'visit',
+  };
+
+  // Save locally first (offline-first guarantee)
+  await window.AshaDB.saveVisit(visitData);
+
+  // Try online submit
+  try {
+    const resp = await fetch('/visits/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(visitData),
+    });
+
+    if (resp.ok) {
+      const result = await resp.json();
+      const level = result.risk_level;
+      const icons = { green: '✅', yellow: '⚡', red: '⚠️', purple: '🚨' };
+      alert(`Visit saved! Risk: ${icons[level] || ''} ${level?.toUpperCase() || 'GREEN'}\n${result.risk_triggered?.slice(0,2).join('\n') || ''}`);
+      window.location.href = '/app';
+    } else {
+      // Server error — already saved locally
+      window.location.href = '/app';
+    }
+  } catch {
+    // Offline — saved locally, will sync
+    const level = window.AshaDB.computeRiskOffline(visitData);
+    const icons = { green: '✅', yellow: '⚡', red: '⚠️', purple: '🚨' };
+    alert(`Saved offline ${icons[level] || ''}\nWill sync when connected.`);
+    window.location.href = '/app';
+  }
+}
+</script>
+{% endblock %}

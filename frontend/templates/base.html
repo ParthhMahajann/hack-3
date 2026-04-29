@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="theme-color" content="#0f4c35">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>{% block title %}ASHA Saheli{% endblock %}</title>
+  <link rel="manifest" href="/static/manifest.json">
+  <link rel="stylesheet" href="/static/css/app.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  {% block head %}{% endblock %}
+</head>
+<body class="app-shell">
+
+{% block topbar %}
+<header class="topbar">
+  <div>
+    <div class="topbar-title">🌿 ASHA Saheli</div>
+    <div class="topbar-sub">{% block topbar_sub %}Digital Field Diary{% endblock %}</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:0.75rem;">
+    <span id="pending-count" class="text-sm" style="color:#ffcc80;"></span>
+    <span class="sync-badge badge-synced" id="sync-badge">Synced</span>
+  </div>
+</header>
+{% endblock %}
+
+<main class="main-content content-pad">
+  {% block content %}{% endblock %}
+</main>
+
+{% block bottom_nav %}{% endblock %}
+
+<div id="toast"></div>
+
+<script src="/static/js/db.js"></script>
+<script src="/static/js/sync.js"></script>
+
+<script>
+  // Register Service Worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/static/sw.js')
+      .then(reg => console.log('[SW] Registered', reg.scope))
+      .catch(err => console.warn('[SW] Registration failed', err));
+  }
+</script>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}Block Officer Dashboard — ASHA Saheli{% endblock %}
+{% block topbar_sub %}Block Health Officer View{% endblock %}
+
+{% block content %}
+<!-- Stats -->
+<div class="officer-grid" style="margin-bottom:1rem;">
+  <div class="stat-tile">
+    <div class="stat-num" id="stat-total">—</div>
+    <div class="stat-label">Total Patients</div>
+  </div>
+  <div class="stat-tile alert-tile">
+    <div class="stat-num" id="stat-highrisk">—</div>
+    <div class="stat-label">High Risk</div>
+  </div>
+  <div class="stat-tile" style="border-top:3px solid #6a1b9a;">
+    <div class="stat-num" id="stat-alerts" style="color:#6a1b9a;">—</div>
+    <div class="stat-label">Unack. Alerts</div>
+  </div>
+  <div class="stat-tile incentive-tile">
+    <div class="stat-num" id="stat-pending-incentives">—</div>
+    <div class="stat-label">Pending ₹</div>
+  </div>
+</div>
+
+<!-- Actions -->
+<div style="display:flex;gap:0.75rem;margin-bottom:1rem;flex-wrap:wrap;">
+  <button class="btn btn-primary btn-sm" onclick="loadDashboard()">🔄 Refresh</button>
+  <a class="btn btn-ghost btn-sm" href="/dashboard/export/hmis" target="_blank">📥 Export HMIS CSV</a>
+  <button class="btn btn-ghost btn-sm" onclick="toggleSection('alerts')">🚨 Alerts</button>
+  <button class="btn btn-ghost btn-sm" onclick="toggleSection('patients')">👩‍⚕️ High-Risk Patients</button>
+</div>
+
+<!-- Active Alerts -->
+<div id="section-alerts">
+  <div class="section-title">Unacknowledged Alerts (RED / PURPLE)</div>
+  <div id="alerts-list">
+    <div class="empty-state"><div class="empty-icon">⏳</div>Loading…</div>
+  </div>
+</div>
+
+<!-- High-risk patient table -->
+<div id="section-patients" style="margin-top:1.5rem;">
+  <div class="section-title">High-Risk Patients</div>
+  <div class="card table-wrap">
+    <table id="risk-table">
+      <thead>
+        <tr>
+          <th>Name</th><th>Type</th><th>Risk</th><th>Score</th>
+          <th>Address</th><th>Phone</th>
+        </tr>
+      </thead>
+      <tbody id="risk-tbody">
+        <tr><td colspan="6" style="text-align:center;color:#757575;">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Hierarchy info -->
+<div class="card" style="margin-top:1rem;background:#e8f5ee;">
+  <div class="section-title">Health Hierarchy</div>
+  <div style="font-size:0.82rem;line-height:2;color:#333;">
+    <div>👩 <strong>ASHA</strong> → Village level, logs visits, flags risk</div>
+    <div>👩‍⚕️ <strong>ANM</strong> → Sub-centre, reviews weekly, verifies incentives</div>
+    <div>🏥 <strong>PHC</strong> → Primary Health Centre, manages facility referrals</div>
+    <div>🏢 <strong>Block Officer</strong> → This dashboard, oversees all ASHAs in block</div>
+    <div>🏛️ <strong>District / State</strong> → HMIS reporting, policy decisions</div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const token = localStorage.getItem('asha_token');
+if (!token) window.location.href = '/';
+if (localStorage.getItem('asha_role') !== 'block_officer') {
+  window.location.href = '/app';
+}
+
+const RISK_ICONS = { purple: '🚨', red: '⚠️', yellow: '⚡', green: '✅' };
+
+function toggleSection(id) {
+  const el = document.getElementById('section-' + id);
+  if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
+}
+
+async function loadDashboard() {
+  await Promise.all([loadStats(), loadAlerts(), loadHighRisk()]);
+}
+
+async function loadStats() {
+  try {
+    const r = await fetch('/dashboard/stats', { headers: { Authorization: `Bearer ${token}` } });
+    if (!r.ok) return;
+    const d = await r.json();
+    document.getElementById('stat-total').textContent    = d.total_patients;
+    document.getElementById('stat-highrisk').textContent = d.high_risk_count;
+    document.getElementById('stat-alerts').textContent   = d.unacknowledged_alerts;
+    document.getElementById('stat-pending-incentives').textContent = '₹' + (d.pending_incentives||0).toLocaleString('en-IN');
+  } catch {}
+}
+
+async function loadAlerts() {
+  try {
+    const r = await fetch('/dashboard/alerts', { headers: { Authorization: `Bearer ${token}` } });
+    if (!r.ok) return;
+    const alerts = await r.json();
+    const list = document.getElementById('alerts-list');
+
+    if (!alerts.length) {
+      list.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><p>No unacknowledged alerts.</p></div>';
+      return;
+    }
+    list.innerHTML = alerts.map(a => `
+      <div class="alert-banner ${a.risk_level}" style="margin-bottom:0.5rem;">
+        <div class="alert-banner-icon">${RISK_ICONS[a.risk_level]||'ℹ️'}</div>
+        <div style="flex:1;">
+          <div class="alert-banner-title">${a.patient_name} — Score ${a.risk_score}/100</div>
+          <div class="alert-banner-body">${(a.triggered_params||[]).slice(0,3).join(' · ')}</div>
+          <div class="text-sm" style="color:#888;margin-top:0.2rem;">${a.created_at?.slice(0,16)||''}</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="ackAlert(${a.id})">Acknowledge</button>
+      </div>`).join('');
+  } catch {}
+}
+
+async function ackAlert(alertId) {
+  try {
+    await fetch(`/dashboard/alerts/${alertId}/acknowledge`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    loadDashboard();
+  } catch {}
+}
+
+async function loadHighRisk() {
+  try {
+    const r = await fetch('/dashboard/high-risk-patients', { headers: { Authorization: `Bearer ${token}` } });
+    if (!r.ok) return;
+    const patients = await r.json();
+    const tbody = document.getElementById('risk-tbody');
+
+    if (!patients.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#2e7d32;">✅ No high-risk patients</td></tr>';
+      return;
+    }
+    tbody.innerHTML = patients.map(p => {
+      const rl = p.risk_level || 'green';
+      return `<tr>
+        <td><strong>${p.name}</strong></td>
+        <td>${p.type === 'maternal' ? '🤰 Maternal' : '👶 Child'}</td>
+        <td><span class="risk-badge risk-${rl}">${RISK_ICONS[rl]} ${rl.toUpperCase()}</span></td>
+        <td>${p.risk_score || 0}/100</td>
+        <td>${p.address || '—'}</td>
+        <td>${p.phone ? `<a href="tel:${p.phone}">${p.phone}</a>` : '—'}</td>
+      </tr>`;
+    }).join('');
+  } catch {}
+}
+
+loadDashboard();
+</script>
+{% endblock %}

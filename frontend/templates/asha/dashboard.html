@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block title %}My Patients — ASHA Saheli{% endblock %}
+{% block topbar_sub %}<span id="asha-name">ASHA Worker</span>{% endblock %}
+
+{% block content %}
+<!-- Stats row -->
+<div class="stats-grid" id="stats-grid">
+  <div class="stat-tile">
+    <div class="stat-num" id="stat-total">—</div>
+    <div class="stat-label">Patients</div>
+  </div>
+  <div class="stat-tile alert-tile">
+    <div class="stat-num" id="stat-highrisk">—</div>
+    <div class="stat-label">High Risk</div>
+  </div>
+  <div class="stat-tile">
+    <div class="stat-num" id="stat-alerts">—</div>
+    <div class="stat-label">Alerts</div>
+  </div>
+  <div class="stat-tile incentive-tile">
+    <div class="stat-num" id="stat-incentive">—</div>
+    <div class="stat-label">Pending ₹</div>
+  </div>
+</div>
+
+<!-- Unacknowledged alerts -->
+<div id="alert-banners"></div>
+
+<!-- Filter tabs -->
+<div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;overflow-x:auto;padding-bottom:0.25rem;">
+  <button class="btn btn-primary btn-sm" onclick="filterPatients('all')" id="tab-all">All</button>
+  <button class="btn btn-ghost btn-sm" onclick="filterPatients('purple')" id="tab-purple" style="color:#6a1b9a;border-color:#6a1b9a;">🔴 Critical</button>
+  <button class="btn btn-ghost btn-sm" onclick="filterPatients('red')" id="tab-red" style="color:#c62828;border-color:#c62828;">⚠ Red</button>
+  <button class="btn btn-ghost btn-sm" onclick="filterPatients('maternal')" id="tab-maternal">Maternal</button>
+  <button class="btn btn-ghost btn-sm" onclick="filterPatients('child')" id="tab-child">Child</button>
+</div>
+
+<!-- Patient list -->
+<div id="patient-list">
+  <div class="empty-state"><div class="empty-icon">⏳</div>Loading patients…</div>
+</div>
+
+<!-- FAB: New Visit -->
+<button class="fab" onclick="window.location.href='/app/visit/new'" title="Log New Visit">+</button>
+{% endblock %}
+
+{% block bottom_nav %}
+<nav class="bottom-nav">
+  <a class="nav-item active" href="/app"><div class="nav-icon">🏠</div>Home</a>
+  <a class="nav-item" href="/app/patient/new"><div class="nav-icon">➕</div>New Patient</a>
+  <a class="nav-item" href="/app/visit/new"><div class="nav-icon">📋</div>Log Visit</a>
+  <a class="nav-item" href="/app/incentives"><div class="nav-icon">💰</div>Incentives</a>
+  <a class="nav-item" onclick="SyncManager.triggerManualSync();return false;" href="#"><div class="nav-icon">🔄</div>Sync</a>
+</nav>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const token = localStorage.getItem('asha_token');
+if (!token) window.location.href = '/';
+
+document.getElementById('asha-name').textContent = localStorage.getItem('asha_name') || 'ASHA';
+
+let _allPatients = [];
+let _currentFilter = 'all';
+
+const RISK_COLORS = {
+  purple: { bg: '#f3e5f5', border: 'purple', badge: 'risk-purple', icon: '🚨' },
+  red:    { bg: '#fff8f8', border: 'red',    badge: 'risk-red',    icon: '⚠️' },
+  yellow: { bg: '#fffde7', border: 'yellow', badge: 'risk-yellow', icon: '⚡' },
+  green:  { bg: '#f9fffe', border: 'green',  badge: 'risk-green',  icon: '✅' },
+};
+
+async function loadDashboard() {
+  await loadStats();
+  await loadPatients();
+  await loadAlerts();
+}
+
+async function loadStats() {
+  try {
+    const r = await fetch('/dashboard/stats', { headers: { Authorization: `Bearer ${token}` } });
+    if (!r.ok) return;
+    const d = await r.json();
+    document.getElementById('stat-total').textContent    = d.total_patients;
+    document.getElementById('stat-highrisk').textContent = d.high_risk_count;
+    document.getElementById('stat-alerts').textContent   = d.unacknowledged_alerts;
+    document.getElementById('stat-incentive').textContent = '₹' + (d.pending_incentives || 0).toLocaleString('en-IN');
+  } catch { /* offline — show cached */ }
+}
+
+async function loadAlerts() {
+  try {
+    const r = await fetch('/dashboard/alerts', { headers: { Authorization: `Bearer ${token}` } });
+    if (!r.ok) return;
+    const alerts = await r.json();
+    const container = document.getElementById('alert-banners');
+    container.innerHTML = '';
+    alerts.slice(0, 3).forEach(a => {
+      const c = RISK_COLORS[a.risk_level] || RISK_COLORS.green;
+      container.innerHTML += `
+        <div class="alert-banner ${a.risk_level}">
+          <div class="alert-banner-icon">${c.icon}</div>
+          <div>
+            <div class="alert-banner-title">${a.patient_name} — Score ${a.risk_score}/100</div>
+            <div class="alert-banner-body">${(a.triggered_params || []).slice(0,2).join(' · ')}</div>
+          </div>
+        </div>`;
+    });
+  } catch {}
+}
+
+async function loadPatients() {
+  try {
+    const r = await fetch('/patients/', { headers: { Authorization: `Bearer ${token}` } });
+    if (r.ok) { _allPatients = await r.json(); }
+  } catch {
+    _allPatients = await window.AshaDB.getPatients();
+  }
+  renderPatients();
+}
+
+function filterPatients(f) {
+  _currentFilter = f;
+  document.querySelectorAll('[id^=tab-]').forEach(b => b.classList.replace('btn-primary', 'btn-ghost'));
+  const t = document.getElementById('tab-' + f);
+  if (t) t.classList.replace('btn-ghost', 'btn-primary');
+  renderPatients();
+}
+
+function renderPatients() {
+  const list = document.getElementById('patient-list');
+  let patients = _allPatients;
+
+  if (_currentFilter === 'purple')  patients = patients.filter(p => p.current_risk_level === 'purple');
+  else if (_currentFilter === 'red') patients = patients.filter(p => p.current_risk_level === 'red');
+  else if (_currentFilter === 'maternal') patients = patients.filter(p => p.patient_type === 'maternal');
+  else if (_currentFilter === 'child')    patients = patients.filter(p => p.patient_type === 'child');
+
+  // Sort: purple first, then red, yellow, green
+  const order = { purple: 0, red: 1, yellow: 2, green: 3 };
+  patients.sort((a,b) => (order[a.current_risk_level]??4) - (order[b.current_risk_level]??4));
+
+  if (!patients.length) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">👩‍⚕️</div><p>No patients found.</p></div>';
+    return;
+  }
+
+  list.innerHTML = patients.map(p => {
+    const rl = p.current_risk_level || 'green';
+    const c = RISK_COLORS[rl] || RISK_COLORS.green;
+    const score = p.current_risk_score || 0;
+    const ptype = p.patient_type === 'maternal' ? '🤰 Maternal' : '👶 Child';
+    const detail = p.patient_type === 'maternal'
+      ? (p.edd ? `EDD: ${p.edd}` : '') : (p.birth_date ? `DOB: ${p.birth_date}` : '');
+
+    return `
+    <div class="card patient-card risk-border-${rl}" style="background:${c.bg};">
+      <div class="card-header">
+        <div>
+          <div class="card-title">${p.name}</div>
+          <div class="card-sub">${ptype} · ${p.address || ''}</div>
+          ${detail ? `<div class="card-sub">${detail}</div>` : ''}
+        </div>
+        <div style="text-align:right;">
+          <span class="risk-badge risk-${rl}">${c.icon} ${rl.toUpperCase()}</span>
+          <div class="text-sm" style="margin-top:0.3rem;color:#555;">${score}/100</div>
+        </div>
+      </div>
+      <div class="risk-bar-wrap">
+        <div class="risk-bar-track">
+          <div class="risk-bar-fill ${rl}" style="width:${Math.min(score,100)}%"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:0.5rem;margin-top:0.75rem;">
+        <button class="btn btn-primary btn-sm" onclick="logVisit('${p.id}','${p.patient_type}')">Log Visit</button>
+        <button class="btn btn-ghost btn-sm" onclick="viewHistory('${p.id}')">History</button>
+        ${p.phone ? `<a class="btn btn-ghost btn-sm" href="tel:${p.phone}">📞 Call</a>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function logVisit(patientId, patientType) {
+  window.location.href = `/app/visit/new?patient_id=${patientId}&type=${patientType}`;
+}
+
+function viewHistory(patientId) {
+  window.location.href = `/app/visit/new?patient_id=${patientId}&view=history`;
+}
+
+loadDashboard();
+</script>
+{% endblock %}

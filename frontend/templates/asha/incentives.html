@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Incentives — ASHA Saheli{% endblock %}
+{% block topbar_sub %}My Earnings (JSY / JSSK){% endblock %}
+
+{% block content %}
+<!-- Summary tiles -->
+<div class="stats-grid" style="grid-template-columns:1fr 1fr 1fr;">
+  <div class="stat-tile incentive-tile">
+    <div class="stat-num" id="total-earned">₹—</div>
+    <div class="stat-label">Total Earned</div>
+  </div>
+  <div class="stat-tile">
+    <div class="stat-num" style="color:#2e7d32;" id="total-verified">₹—</div>
+    <div class="stat-label">Verified</div>
+  </div>
+  <div class="stat-tile alert-tile">
+    <div class="stat-num" id="pending-payment">₹—</div>
+    <div class="stat-label">Pending</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="section-title">Incentive Rate Card (MOHFW Guidelines)</div>
+  <div style="font-size:0.8rem;line-height:1.9;color:#555;">
+    <div class="flex-between"><span>JSY Institutional Delivery (Rural)</span><strong>₹1,400</strong></div>
+    <div class="flex-between"><span>JSY Institutional Delivery (Urban)</span><strong>₹1,000</strong></div>
+    <div class="flex-between"><span>ANC Registration</span><strong>₹300</strong></div>
+    <div class="flex-between"><span>4th ANC Contact</span><strong>₹300</strong></div>
+    <div class="flex-between"><span>Immunisation (per session)</span><strong>₹150</strong></div>
+    <div class="flex-between"><span>Referral Escort</span><strong>₹250</strong></div>
+    <div class="flex-between"><span>NRC Admission</span><strong>₹500</strong></div>
+    <div class="flex-between"><span>VHND Session</span><strong>₹200</strong></div>
+  </div>
+</div>
+
+<div class="section-title">Event Log</div>
+<div id="incentive-list">
+  <div class="empty-state"><div class="empty-icon">⏳</div>Loading…</div>
+</div>
+{% endblock %}
+
+{% block bottom_nav %}
+<nav class="bottom-nav">
+  <a class="nav-item" href="/app"><div class="nav-icon">🏠</div>Home</a>
+  <a class="nav-item" href="/app/patient/new"><div class="nav-icon">➕</div>New Patient</a>
+  <a class="nav-item" href="/app/visit/new"><div class="nav-icon">📋</div>Log Visit</a>
+  <a class="nav-item active" href="/app/incentives"><div class="nav-icon">💰</div>Incentives</a>
+  <a class="nav-item" onclick="SyncManager.triggerManualSync();return false;" href="#"><div class="nav-icon">🔄</div>Sync</a>
+</nav>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const token = localStorage.getItem('asha_token');
+if (!token) window.location.href = '/';
+
+async function loadIncentives() {
+  try {
+    const r = await fetch('/dashboard/incentives', { headers: { Authorization: `Bearer ${token}` } });
+    if (!r.ok) return;
+    const d = await r.json();
+
+    document.getElementById('total-earned').textContent = '₹' + d.total_earned.toLocaleString('en-IN');
+    document.getElementById('total-verified').textContent = '₹' + d.total_verified.toLocaleString('en-IN');
+    document.getElementById('pending-payment').textContent = '₹' + d.pending_payment.toLocaleString('en-IN');
+
+    const list = document.getElementById('incentive-list');
+    if (!d.events.length) {
+      list.innerHTML = '<div class="empty-state"><div class="empty-icon">💰</div><p>No incentive events yet.</p></div>';
+      return;
+    }
+    const typeLabels = {
+      jsy_delivery_rural: 'JSY Delivery (Rural)',
+      jsy_delivery_urban: 'JSY Delivery (Urban)',
+      anc_registration: 'ANC Registration',
+      anc_4th_contact: 'ANC 4th Contact',
+      imm_bcg: 'BCG Immunisation',
+      imm_penta: 'Penta Immunisation',
+      imm_measles: 'Measles Immunisation',
+      referral_escort: 'Referral Escort',
+      nrc_admission: 'NRC Admission',
+      vhnd_session: 'VHND Session',
+    };
+    list.innerHTML = d.events.map(e => `
+      <div class="card" style="margin-bottom:0.5rem;">
+        <div class="flex-between">
+          <div>
+            <div class="text-bold" style="font-size:0.9rem;">${typeLabels[e.type] || e.type}</div>
+            <div class="text-sm" style="color:#555;">${e.patient_name} · ${e.event_date}</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="text-bold" style="font-size:1.1rem;color:#0f4c35;">₹${e.amount}</div>
+            <div class="text-sm">${e.verified ? '<span style="color:#2e7d32;">✓ Verified</span>' : '<span style="color:#e65100;">Pending</span>'}</div>
+          </div>
+        </div>
+      </div>`).join('');
+  } catch (e) {
+    console.error(e);
+  }
+}
+loadIncentives();
+</script>
+{% endblock %}

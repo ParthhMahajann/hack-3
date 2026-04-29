@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block title %}Register Patient — ASHA Saheli{% endblock %}
+{% block topbar_sub %}Register New Patient{% endblock %}
+
+{% block content %}
+<!-- Type selector -->
+<div class="card">
+  <div class="section-title">Patient Type</div>
+  <div style="display:flex;gap:0.75rem;">
+    <button class="btn btn-primary" style="flex:1;" id="btn-maternal" onclick="setType('maternal')">🤰 Maternal</button>
+    <button class="btn btn-ghost" style="flex:1;" id="btn-child" onclick="setType('child')">👶 Child</button>
+  </div>
+</div>
+
+<!-- Demographics -->
+<div class="card">
+  <div class="section-title">Demographics</div>
+  <div class="form-group">
+    <label class="form-label">Full Name *</label>
+    <input type="text" class="form-control" id="name" placeholder="Patient's full name" required>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label class="form-label">Age (years)</label>
+      <input type="number" class="form-control" id="age" placeholder="e.g. 24" min="0" max="120">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Date of Birth</label>
+      <input type="date" class="form-control" id="dob">
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Address</label>
+    <input type="text" class="form-control" id="address" placeholder="House no., Village, District">
+  </div>
+  <div class="form-group">
+    <label class="form-label">Phone Number</label>
+    <input type="tel" class="form-control" id="phone" placeholder="10-digit mobile">
+  </div>
+</div>
+
+<!-- Maternal fields -->
+<div id="section-maternal" class="card">
+  <div class="section-title">Pregnancy Details (MCP Card)</div>
+  <div class="form-group">
+    <label class="form-label">Husband's Name</label>
+    <input type="text" class="form-control" id="husband_name">
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label class="form-label">LMP (Last Menstrual Period)</label>
+      <input type="date" class="form-control" id="lmp" oninput="calcEDD()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">EDD (Expected Delivery)</label>
+      <input type="date" class="form-control" id="edd">
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label class="form-label">Gravida (Pregnancies)</label>
+      <input type="number" class="form-control" id="gravida" placeholder="1" min="1">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Para (Deliveries)</label>
+      <input type="number" class="form-control" id="para" placeholder="0" min="0">
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Blood Group</label>
+    <select class="form-control" id="blood_group">
+      <option value="">Not known</option>
+      <option value="A+">A+</option><option value="A-">A-</option>
+      <option value="B+">B+</option><option value="B-">B-</option>
+      <option value="O+">O+</option><option value="O-">O-</option>
+      <option value="AB+">AB+</option><option value="AB-">AB-</option>
+    </select>
+  </div>
+</div>
+
+<!-- Child fields -->
+<div id="section-child" class="card" style="display:none;">
+  <div class="section-title">Child Details</div>
+  <div class="form-row">
+    <div class="form-group">
+      <label class="form-label">Sex</label>
+      <select class="form-control" id="sex">
+        <option value="M">Male</option>
+        <option value="F">Female</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Date of Birth *</label>
+      <input type="date" class="form-control" id="child_dob">
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Birth Weight (kg)</label>
+    <input type="number" step="0.01" class="form-control" id="birth_weight" placeholder="e.g. 2.9">
+  </div>
+  <div class="form-group">
+    <label class="form-label">Mother's Name (for linking)</label>
+    <input type="text" class="form-control" id="mother_name" placeholder="Search mother record">
+  </div>
+</div>
+
+<div class="card">
+  <button class="btn btn-primary btn-full" onclick="savePatient()">💾 Register Patient</button>
+  <div id="save-error" style="color:#c62828;font-size:0.85rem;margin-top:0.5rem;display:none;"></div>
+</div>
+{% endblock %}
+
+{% block bottom_nav %}
+<nav class="bottom-nav">
+  <a class="nav-item" href="/app"><div class="nav-icon">🏠</div>Home</a>
+  <a class="nav-item active" href="/app/patient/new"><div class="nav-icon">➕</div>New Patient</a>
+  <a class="nav-item" href="/app/visit/new"><div class="nav-icon">📋</div>Log Visit</a>
+  <a class="nav-item" href="/app/incentives"><div class="nav-icon">💰</div>Incentives</a>
+  <a class="nav-item" onclick="SyncManager.triggerManualSync();return false;" href="#"><div class="nav-icon">🔄</div>Sync</a>
+</nav>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const token = localStorage.getItem('asha_token');
+if (!token) window.location.href = '/';
+let _patientType = 'maternal';
+
+function setType(type) {
+  _patientType = type;
+  document.getElementById('section-maternal').style.display = type === 'maternal' ? '' : 'none';
+  document.getElementById('section-child').style.display = type === 'child' ? '' : 'none';
+  document.getElementById('btn-maternal').className = `btn ${type === 'maternal' ? 'btn-primary' : 'btn-ghost'} flex-1`;
+  document.getElementById('btn-child').className = `btn ${type === 'child' ? 'btn-primary' : 'btn-ghost'} flex-1`;
+}
+
+function calcEDD() {
+  const lmp = document.getElementById('lmp').value;
+  if (!lmp) return;
+  const d = new Date(lmp);
+  d.setDate(d.getDate() + 280); // Naegele's rule
+  document.getElementById('edd').value = d.toISOString().slice(0, 10);
+}
+
+async function savePatient() {
+  const errEl = document.getElementById('save-error');
+  errEl.style.display = 'none';
+  const name = document.getElementById('name').value.trim();
+  if (!name) { errEl.textContent = 'Name is required'; errEl.style.display = 'block'; return; }
+
+  const pid = 'pat-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+  const data = {
+    id: pid,
+    patient_type: _patientType,
+    name,
+    age: parseInt(document.getElementById('age').value) || null,
+    dob: document.getElementById('dob').value || null,
+    address: document.getElementById('address').value || null,
+    phone: document.getElementById('phone').value || null,
+    entity_type: 'patient',
+  };
+
+  if (_patientType === 'maternal') {
+    data.husband_name = document.getElementById('husband_name').value || null;
+    data.lmp = document.getElementById('lmp').value || null;
+    data.edd = document.getElementById('edd').value || null;
+    data.gravida = parseInt(document.getElementById('gravida').value) || null;
+    data.para = parseInt(document.getElementById('para').value) || null;
+    data.blood_group = document.getElementById('blood_group').value || null;
+  } else {
+    data.sex = document.getElementById('sex').value;
+    data.birth_date = document.getElementById('child_dob').value || null;
+    data.birth_weight_kg = parseFloat(document.getElementById('birth_weight').value) || null;
+  }
+
+  await window.AshaDB.savePatient(data);
+
+  try {
+    const resp = await fetch('/patients/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+    if (resp.ok) { alert('Patient registered!'); window.location.href = '/app'; }
+    else { window.location.href = '/app'; }
+  } catch {
+    alert('Saved offline — will sync when connected.');
+    window.location.href = '/app';
+  }
+}
+</script>
+{% endblock %}
