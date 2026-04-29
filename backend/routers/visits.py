@@ -18,6 +18,7 @@ from backend.core.ml_risk_predictor import (
     MaternalMLInput, ChildMLInput,
     predict_maternal_risk, predict_child_risk
 )
+from backend.core.nlp_summarizer import summarise_visit
 
 router = APIRouter(prefix="/visits", tags=["visits"])
 
@@ -184,6 +185,15 @@ async def log_visit(
     await db.refresh(visit)
     out = VisitOut.model_validate(visit)
     out.ml_forecast = risk.get("ml_forecast")
+    # NLP summary (bilingual)
+    nlp = summarise_visit(
+        patient_type=patient.patient_type,
+        vitals=data.vitals, observations=data.observations,
+        risk_level=risk["level"], risk_score=risk["score"],
+        triggered=risk["triggered_parameters"],
+        ml_forecast=risk.get("ml_forecast"),
+    )
+    out.ml_forecast = {**(risk.get("ml_forecast") or {}), "nlp_summary": nlp}
     return out
 
 

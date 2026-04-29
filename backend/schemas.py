@@ -1,7 +1,7 @@
 from __future__ import annotations
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, model_validator
 
 
 # --- Auth ---
@@ -80,6 +80,21 @@ class PatientOut(PatientCreate):
 
 # --- Visit ---
 
+# Vital sign clinical bounds (WHO / standard lab reference ranges)
+_VITAL_BOUNDS: dict[str, tuple[float, float]] = {
+    "hemoglobin":       (2.0,  25.0),   # g/dL — impossible outside this range
+    "systolic_bp":      (40,   300),     # mmHg
+    "diastolic_bp":     (20,   200),     # mmHg
+    "weight_kg":        (0.5,  250),     # kg — covers neonates to obese adults
+    "gestational_week": (1,    45),      # weeks
+    "fbs":              (0,    600),     # mg/dL fasting blood sugar
+    "muac_mm":          (50,   400),     # mm
+    "temperature_c":    (30.0, 43.0),   # °C
+    "height_cm":        (20,   250),     # cm
+    "bmi_booking":      (10,   80),      # kg/m²
+}
+
+
 class VisitCreate(BaseModel):
     id: str
     patient_id: str
@@ -91,6 +106,38 @@ class VisitCreate(BaseModel):
     gps_lng: Optional[float] = None
     device_id: Optional[str] = None
     updated_at: Optional[float] = None  # Unix timestamp
+
+    @model_validator(mode="after")
+    def validate_vitals(self) -> "VisitCreate":
+        """Reject physiologically impossible vital sign values."""
+        errors: list[str] = []
+        for field, (lo, hi) in _VITAL_BOUNDS.items():
+            val = self.vitals.get(field)
+            if val is None:
+                continue
+            try:
+                v = float(val)
+            except (TypeError, ValueError):
+                errors.append(f"{field}: must be a number (got {val!r})")
+                continue
+            if not (lo <= v <= hi):
+                errors.append(
+                    f"{field}: value {v} is outside clinical range [{lo}, {hi}]"
+                )
+        # BP sanity: systolic must be > diastolic
+        sys = self.vitals.get("systolic_bp")
+        dia = self.vitals.get("diastolic_bp")
+        if sys is not None and dia is not None:
+            try:
+                if float(sys) <= float(dia):
+                    errors.append(
+                        f"systolic_bp ({sys}) must be greater than diastolic_bp ({dia})"
+                    )
+            except (TypeError, ValueError):
+                pass
+        if errors:
+            raise ValueError("Invalid vitals: " + "; ".join(errors))
+        return self
 
 
 class VisitOut(BaseModel):

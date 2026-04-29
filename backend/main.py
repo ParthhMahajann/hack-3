@@ -11,9 +11,10 @@ from fastapi import FastAPI, Request, Depends
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.middleware.cors import CORSMiddleware
 
 from backend.database import init_db
-from backend.routers import auth, patients, visits, sync, dashboard
+from backend.routers import auth, patients, visits, sync, dashboard, analytics
 from backend.config import get_settings
 
 settings = get_settings()
@@ -33,6 +34,15 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Static files + templates
 BASE_DIR = Path(__file__).resolve().parent.parent
 app.mount("/static", StaticFiles(directory=BASE_DIR / "frontend" / "static"), name="static")
@@ -44,6 +54,7 @@ app.include_router(patients.router)
 app.include_router(visits.router)
 app.include_router(sync.router)
 app.include_router(dashboard.router)
+app.include_router(analytics.router)
 
 
 # ---------------------------------------------------------------------------
@@ -89,6 +100,11 @@ async def officer_dashboard(request: Request):
 @app.get("/app/incentives", response_class=HTMLResponse)
 async def incentives(request: Request):
     return templates.TemplateResponse("asha/incentives.html", {"request": request})
+
+
+@app.get("/app/research", response_class=HTMLResponse)
+async def research_page(request: Request):
+    return templates.TemplateResponse("asha/research.html", {"request": request})
 
 
 # ---------------------------------------------------------------------------
