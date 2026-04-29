@@ -107,6 +107,7 @@ class VisitOut(BaseModel):
     gps_lat: Optional[float] = None
     gps_lng: Optional[float] = None
     created_at: Optional[datetime] = None
+    ml_forecast: Optional[dict] = None
 
     model_config = {"from_attributes": True}
 

@@ -182,7 +182,19 @@ async def log_visit(
 
     await db.commit()
     await db.refresh(visit)
-    return visit
+    out = VisitOut.model_validate(visit)
+    out.ml_forecast = risk.get("ml_forecast")
+    return out
+
+
+@router.get("/overdue")
+async def overdue_visits(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Patients overdue for a visit per WHO ANC/NHM schedule."""
+    from backend.core.visit_scheduler import get_overdue_visits
+    return await get_overdue_visits(current_user.id, db)
 
 
 @router.get("/patient/{patient_id}", response_model=list[VisitOut])

@@ -26,6 +26,18 @@
 <!-- Unacknowledged alerts -->
 <div id="alert-banners"></div>
 
+<!-- Overdue Visits -->
+<div id="overdue-section" style="display:none;margin-bottom:0.75rem;">
+  <div class="section-title" style="color:#e65100;">⏰ Overdue Visits</div>
+  <div id="overdue-list"></div>
+</div>
+
+<!-- Incentive Progress -->
+<div id="incentive-progress-card" style="display:none;" class="card" style="margin-bottom:0.75rem;">
+  <div class="section-title" style="margin-top:0;">💰 Monthly Incentive Progress</div>
+  <div id="incentive-progress-bar-wrap"></div>
+</div>
+
 <!-- Filter tabs -->
 <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;overflow-x:auto;padding-bottom:0.25rem;">
   <button class="btn btn-primary btn-sm" onclick="filterPatients('all')" id="tab-all">All</button>
@@ -73,8 +85,61 @@ const RISK_COLORS = {
 
 async function loadDashboard() {
   await loadStats();
-  await loadPatients();
-  await loadAlerts();
+  await Promise.all([loadPatients(), loadAlerts(), loadOverdue(), loadIncentiveProgress()]);
+}
+
+async function loadOverdue() {
+  try {
+    const r = await fetch('/visits/overdue', { headers: { Authorization: `Bearer ${token}` } });
+    if (!r.ok) return;
+    const overdue = await r.json();
+    const section = document.getElementById('overdue-section');
+    const list = document.getElementById('overdue-list');
+    if (!overdue.length) { section.style.display = 'none'; return; }
+    section.style.display = '';
+    const RISK_ICONS = { purple: '🚨', red: '⚠️', yellow: '⚡', green: '✅' };
+    list.innerHTML = overdue.map(o => {
+      const urgent = o.days_overdue > 14;
+      return `<div class="card" style="border-left:4px solid ${urgent ? '#c62828' : '#f9a825'};padding:0.75rem;margin-bottom:0.5rem;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <strong>${o.patient_name}</strong>
+            <span class="risk-badge risk-${o.risk_level}" style="margin-left:0.4rem;font-size:0.65rem;">${RISK_ICONS[o.risk_level] || ''} ${o.risk_level.toUpperCase()}</span>
+            <div class="text-sm" style="color:${urgent ? '#c62828' : '#e65100'};margin-top:0.2rem;">
+              ⏰ ${o.days_overdue} day${o.days_overdue !== 1 ? 's' : ''} overdue — ${o.recommended_visit_type.replace(/_/g, ' ')}
+            </div>
+            <div class="text-sm" style="color:#888;">${o.last_visit_date ? 'Last visit: ' + o.last_visit_date : 'Never visited'}</div>
+          </div>
+          ${o.phone ? `<a class="btn btn-ghost btn-sm" href="tel:${o.phone}" style="flex-shrink:0;">📞</a>` : ''}
+        </div>
+        <button class="btn btn-primary btn-sm" style="margin-top:0.5rem;width:100%;" onclick="logVisit('${o.patient_id}','${o.patient_type}')">Log Visit Now</button>
+      </div>`;
+    }).join('');
+  } catch {}
+}
+
+async function loadIncentiveProgress() {
+  try {
+    const r = await fetch('/dashboard/incentives', { headers: { Authorization: `Bearer ${token}` } });
+    if (!r.ok) return;
+    const data = await r.json();
+    const earned = data.total_earned || 0;
+    const MONTHLY_TARGET = 600;
+    const pct = Math.min(Math.round(earned / MONTHLY_TARGET * 100), 100);
+    const card = document.getElementById('incentive-progress-card');
+    const wrap = document.getElementById('incentive-progress-bar-wrap');
+    if (!earned) return;
+    card.style.display = '';
+    wrap.innerHTML = `
+      <div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:0.3rem;">
+        <span>₹${earned.toLocaleString('en-IN')} earned</span>
+        <span style="color:#757575;">Target: ₹${MONTHLY_TARGET}/mo</span>
+      </div>
+      <div class="risk-bar-track">
+        <div class="risk-bar-fill ${pct >= 100 ? 'green' : pct >= 50 ? 'yellow' : 'red'}" style="width:${pct}%;"></div>
+      </div>
+      <div style="font-size:0.75rem;color:#757575;margin-top:0.3rem;">${pct}% of monthly target · ₹${data.total_verified || 0} verified · ₹${data.pending_payment || 0} pending</div>`;
+  } catch {}
 }
 
 async function loadStats() {

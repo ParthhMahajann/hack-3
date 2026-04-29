@@ -424,7 +424,11 @@ async function submitVisit() {
       const result = await resp.json();
       const level = result.risk_level;
       const icons = { green: '✅', yellow: '⚡', red: '⚠️', purple: '🚨' };
-      alert(`Visit saved! Risk: ${icons[level] || ''} ${level?.toUpperCase() || 'GREEN'}\n${result.risk_triggered?.slice(0,2).join('\n') || ''}`);
+      let msg = `Visit saved! Risk: ${icons[level] || ''} ${level?.toUpperCase() || 'GREEN'}\n${result.risk_triggered?.slice(0,2).join('\n') || ''}`;
+      if (result.ml_forecast) {
+        msg += `\n\n📊 30-Day Forecast: ${result.ml_forecast.interpretation}`;
+      }
+      alert(msg);
       window.location.href = '/app';
     } else {
       // Server error — already saved locally
