@@ -21,6 +21,7 @@
     <div class="topbar-sub">{% block topbar_sub %}Digital Field Diary{% endblock %}</div>
   </div>
   <div class="sync-badge synced" id="sync-badge">✓ Synced</div>
+  <button onclick="(function(){localStorage.clear();window.location.href='/'})()" style="background:transparent;border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.7);border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;font-family:inherit;" title="Logout">⏻</button>
 </div>
 <div class="tricolor"><div class="tc-s"></div><div class="tc-w"></div><div class="tc-g"></div></div>
 {% endblock %}

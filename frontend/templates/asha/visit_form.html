@@ -280,26 +280,39 @@ function updateRisk() {
     const sbp = parseFloat(document.getElementById('sbp').value);
     const dbp = parseFloat(document.getElementById('dbp').value);
     const fbs = parseFloat(document.getElementById('fbs').value);
-    if (hb  && hb  < 7)    { score += 30; params.push('Severe anaemia (Hb < 7 g/dL)'); }
-    else if (hb && hb < 11){ score += 15; params.push('Anaemia (Hb < 11 g/dL)'); }
-    if (sbp && sbp >= 140) { score += 25; params.push('Hypertension (SBP ≥ 140 mmHg)'); }
-    else if (sbp && sbp >= 130){ score += 12; params.push('BP elevated (SBP ≥ 130)'); }
-    if (dbp && dbp >= 90)  { score += 15; params.push('Diastolic BP ≥ 90 mmHg'); }
+    // Thresholds aligned with backend risk_engine.py [WHO ANC Rec 38]
+    if (hb  && hb  < 7)    { score += 60; params.push('Severe anaemia (Hb < 7 g/dL)'); }
+    else if (hb && hb < 10){ score += 20; params.push('Moderate anaemia (Hb < 10 g/dL)'); }
+    // [WHO ANC Rec 29] — severe vs pre-eclampsia BP
+    if (sbp && sbp >= 160 || dbp && dbp >= 110) { score += 80; params.push(`Severe hypertension (${sbp||'?'}/${dbp||'?'})`); }
+    else if (sbp && sbp >= 140 || dbp && dbp >= 90) { score += 35; params.push(`Pre-eclampsia range BP (${sbp||'?'}/${dbp||'?'})`); }
     if (fbs && fbs > 126)  { score += 15; params.push('GDM suspected (FBS > 126 mg/dL)'); }
     if (document.getElementById('obs-proteinuria').checked) { score += 20; params.push('Proteinuria ≥2+'); }
-    if (document.getElementById('obs-oedema').checked)      { score +=  8; params.push('Generalised oedema'); }
-    if (document.getElementById('obs-prev-comp').checked)   { score += 10; params.push('Previous complications'); }
+    if (document.getElementById('obs-oedema').checked)      { score += 15; params.push('Generalised oedema'); }
+    if (document.getElementById('obs-prev-comp').checked)   { score += 15; params.push('Previous complications'); }
+    // Pre-eclampsia triad synergy [WHO ANC]
+    if ((sbp >= 140 || dbp >= 90) && document.getElementById('obs-oedema').checked && document.getElementById('obs-proteinuria').checked) {
+      score = Math.max(score, 80); params.push('Pre-eclampsia triad: BP + oedema + proteinuria');
+    }
+    const missed = parseInt(document.getElementById('anc_missed').value) || 0;
+    if (missed >= 2) { score += 10; params.push(`Missed ${missed} ANC contacts`); }
+    else if (missed >= 1) { score += 5; params.push('Missed 1 ANC contact'); }
   } else {
+    // IMNCI danger signs → immediate PURPLE [IMNCI India 2009, Ch 2]
+    const dangers = document.querySelectorAll('#danger-signs input[type=checkbox]:checked').length;
+    if (dangers > 0) { score = 100; params.push(`${dangers} IMNCI danger sign(s) — IMMEDIATE referral`); }
     const muac   = parseFloat(document.getElementById('muac').value);
     const temp   = parseFloat(document.getElementById('temperature').value);
     const fever  = parseInt(document.getElementById('fever_days').value);
-    const dangers = document.querySelectorAll('#danger-signs input[type=checkbox]:checked').length;
+    // [WHO MUAC 2013]
     if (muac && muac < 115)      { score += 40; params.push('SAM: MUAC < 115mm'); }
     else if (muac && muac < 125) { score += 20; params.push('MAM: MUAC < 125mm'); }
-    if (temp && temp >= 38.5)    { score += 10; params.push('High fever (≥38.5°C)'); }
-    if (fever && fever >= 3)     { score += 10; params.push(`Fever ${fever} days`); }
-    score += Math.min(dangers * 15, 30);
-    if (dangers > 0) params.push(`${dangers} IMNCI danger sign(s)`);
+    // [IMNCI Ch 3] — persistent fever
+    if (fever && fever >= 7)     { score += 60; params.push(`Persistent fever: ${fever} days (IMNCI referral)`); }
+    else if (temp && temp >= 38.5){ score += 10; params.push(`Fever: ${temp}°C`); }
+    const immOverdue = parseInt(document.getElementById('immunisation_overdue').value) || 0;
+    if (immOverdue >= 60)       { score += 60; params.push(`Immunisation severely overdue: ${immOverdue} days`); }
+    else if (immOverdue >= 28)  { score += 15; params.push(`Immunisation overdue: ${immOverdue} days`); }
   }
   score = Math.min(score, 100);
   const el_score  = document.getElementById('rp-score');
@@ -312,10 +325,11 @@ function updateRisk() {
     return;
   }
   el_score.textContent = score;
+  // Tier boundaries aligned with backend risk_engine.py _classify()
   let tier;
-  if (score >= 75)      tier = 'purple';
-  else if (score >= 50) tier = 'red';
-  else if (score >= 25) tier = 'yellow';
+  if (score >= 80)      tier = 'purple';
+  else if (score >= 60) tier = 'red';
+  else if (score >= 30) tier = 'yellow';
   else                  tier = 'green';
   el_badge.className = `risk-badge ${tier}`; el_badge.style.cssText = '';
   el_badge.textContent = RISK_HINDI[tier];
@@ -333,6 +347,16 @@ function captureGPS() {
   } else { status.textContent = 'GPS not supported'; }
 }
 
+// Map danger sign labels to IMNCI constant names (must match risk_engine.py)
+const _DANGER_SIGN_MAP = {
+  'Not able to drink / breastfeed': 'not_able_to_drink',
+  'Vomits everything': 'vomits_everything',
+  'Convulsions': 'convulsions',
+  'Lethargic / Unconscious': 'lethargic_unconscious',
+  'Severe chest indrawing': 'severe_chest_indrawing',
+  'Stridor at calm': 'stridor_calm',
+};
+
 async function submitVisit() {
   const sel = document.getElementById('patient-select');
   if (!sel.value) { showToast('⚠ Please select a patient'); return; }
@@ -341,38 +365,69 @@ async function submitVisit() {
   btn.textContent = 'Saving…'; btn.disabled = true;
 
   const patient = _patients.find(p => p.id === sel.value) || {};
-  const body    = {
-    patient_id:   sel.value,
-    patient_type: patient.patient_type || _currentType,
-    visit_type:   document.getElementById('visit_type').value,
-    visit_date:   document.getElementById('visit-date').value,
-  };
-  if (_gpsLat) { body.gps_lat = _gpsLat; body.gps_lon = _gpsLon; }
+
+  // Build nested vitals + observations to match VisitCreate schema
+  const vitals = {};
+  const observations = {};
 
   if (_currentType === 'maternal') {
-    body.hemoglobin      = parseFloat(document.getElementById('hb').value)             || null;
-    body.weight_kg       = parseFloat(document.getElementById('weight_kg').value)       || null;
-    body.bp_systolic     = parseInt(document.getElementById('sbp').value)               || null;
-    body.bp_diastolic    = parseInt(document.getElementById('dbp').value)               || null;
-    body.height_cm       = parseInt(document.getElementById('height_cm').value)         || null;
-    body.gestational_age = parseInt(document.getElementById('gestational_age').value)   || null;
-    body.fbs_mg_dl       = parseFloat(document.getElementById('fbs').value)             || null;
-    body.spo2            = parseInt(document.getElementById('spo2').value)              || null;
-    body.oedema          = document.getElementById('obs-oedema').checked;
-    body.proteinuria_2plus = document.getElementById('obs-proteinuria').checked;
-    body.previous_complications = document.getElementById('obs-prev-comp').checked;
-    body.anc_missed      = parseInt(document.getElementById('anc_missed').value)        || 0;
+    const hb = parseFloat(document.getElementById('hb').value);
+    if (hb) vitals.hemoglobin = hb;
+    const wt = parseFloat(document.getElementById('weight_kg').value);
+    if (wt) vitals.weight_kg = wt;
+    const sbp = parseInt(document.getElementById('sbp').value);
+    if (sbp) vitals.systolic_bp = sbp;
+    const dbp = parseInt(document.getElementById('dbp').value);
+    if (dbp) vitals.diastolic_bp = dbp;
+    const ht = parseInt(document.getElementById('height_cm').value);
+    if (ht) vitals.height_cm = ht;
+    const gw = parseInt(document.getElementById('gestational_age').value);
+    if (gw) vitals.gestational_week = gw;
+    const fbs = parseFloat(document.getElementById('fbs').value);
+    if (fbs) vitals.fbs = fbs;
+    const spo2 = parseInt(document.getElementById('spo2').value);
+    if (spo2) vitals.spo2 = spo2;
+    observations.edema_generalised = document.getElementById('obs-oedema').checked;
+    observations.proteinuria_2plus = document.getElementById('obs-proteinuria').checked;
+    observations.previous_complications = document.getElementById('obs-prev-comp').checked;
+    observations.missed_anc_visits = parseInt(document.getElementById('anc_missed').value) || 0;
   } else {
-    body.weight_kg       = parseFloat(document.getElementById('child_weight').value)    || null;
-    body.height_cm       = parseInt(document.getElementById('child_height').value)      || null;
-    body.muac_mm         = parseInt(document.getElementById('muac').value)              || null;
-    body.temperature_c   = parseFloat(document.getElementById('temperature').value)    || null;
-    body.spo2            = parseInt(document.getElementById('child_spo2').value)        || null;
-    body.fever_days      = parseInt(document.getElementById('fever_days').value)        || 0;
-    body.immunisation_overdue_days = parseInt(document.getElementById('immunisation_overdue').value) || 0;
+    const cwt = parseFloat(document.getElementById('child_weight').value);
+    if (cwt) vitals.weight_kg = cwt;
+    const cht = parseInt(document.getElementById('child_height').value);
+    if (cht) vitals.height_cm = cht;
+    const muac = parseInt(document.getElementById('muac').value);
+    if (muac) vitals.muac_mm = muac;
+    const temp = parseFloat(document.getElementById('temperature').value);
+    if (temp) vitals.temperature_c = temp;
+    const cspo2 = parseInt(document.getElementById('child_spo2').value);
+    if (cspo2) vitals.spo2 = cspo2;
+    observations.fever_days = parseInt(document.getElementById('fever_days').value) || 0;
+    observations.immunisation_overdue_days = parseInt(document.getElementById('immunisation_overdue').value) || 0;
+    // Map danger sign labels → IMNCI constant names
     const checked = document.querySelectorAll('#danger-signs input[type=checkbox]:checked');
-    body.danger_signs    = Array.from(checked).map(c => c.parentElement.querySelector('label').textContent.trim());
+    observations.danger_signs = Array.from(checked).map(c => {
+      const label = c.parentElement.querySelector('label').textContent.trim();
+      return _DANGER_SIGN_MAP[label] || label.toLowerCase().replace(/[\s\/]+/g, '_');
+    });
   }
+
+  // Generate UUID for visit id (required by VisitCreate schema)
+  const visitId = typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID()
+    : 'vis-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+
+  const body = {
+    id:           visitId,
+    patient_id:   sel.value,
+    visit_type:   document.getElementById('visit_type').value,
+    visit_date:   document.getElementById('visit-date').value,
+    vitals:       vitals,
+    observations: observations,
+    gps_lat:      _gpsLat || null,
+    gps_lng:      _gpsLon || null,
+    updated_at:   Date.now() / 1000,
+  };
 
   let result = null;
   try {
@@ -381,9 +436,18 @@ async function submitVisit() {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body:    JSON.stringify(body),
     });
-    if (r.ok) result = await r.json();
+    if (r.ok) {
+      result = await r.json();
+    } else {
+      const errText = await r.text();
+      console.error('Visit POST error:', r.status, errText);
+      showToast('⚠ Error saving visit: ' + r.status);
+    }
   } catch {
-    await window.AshaDB.saveSyncQueueItem({ type: 'visit', data: body, ts: Date.now() });
+    // Offline: save to IndexedDB sync queue using correct AshaDB method
+    body.patient_type = patient.patient_type || _currentType;
+    body.entity_type = 'visit';
+    await window.AshaDB.saveVisit(body);
     showToast('✓ Saved offline — will sync when connected');
     setTimeout(() => { window.location.href = '/app'; }, 1500);
     return;
@@ -396,15 +460,19 @@ async function submitVisit() {
     document.getElementById('result-score').textContent = result.risk_score || '—';
     const badge = document.getElementById('result-badge');
     badge.className = `risk-badge ${rl}`; badge.textContent = RISK_HINDI[rl] || rl;
-    const params = result.triggered_params || [];
+    // Backend returns risk_triggered (not triggered_params)
+    const params = result.risk_triggered || [];
     document.getElementById('result-params').innerHTML = params.length
       ? params.map(p => `▸ ${p}<br>`).join('') : 'No risk parameters triggered.';
     const fcBox = document.getElementById('forecast-box');
     if (result.ml_forecast) {
       const fc = result.ml_forecast;
       fcBox.style.display = '';
+      // Use correct field names from ML predictor output
+      const nlp = fc.nlp_summary || {};
       fcBox.innerHTML = `<strong>🔮 30-Day ML Forecast:</strong><br>
-        <strong>${fc.risk_label || 'Moderate'} (${Math.round((fc.probability || 0) * 100)}%) probability</strong> of obstetric complication in 30 days. ${fc.recommendation || 'Refer to PHC if condition worsens.'}`;
+        <strong>${fc.risk_band ? fc.risk_band.replace('_',' ') : 'Moderate'} (${fc.percentage || 0}%) probability</strong>
+        of adverse outcome in 30 days.<br>${fc.interpretation || nlp.recommendation_en || 'Refer to PHC if condition worsens.'}`;
     }
     document.getElementById('result-overlay').classList.add('visible');
   } else {

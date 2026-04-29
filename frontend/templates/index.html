@@ -135,6 +135,22 @@ async function doLogin(e) {
     localStorage.setItem('asha_role', data.role);
     localStorage.setItem('asha_name', data.name);
     localStorage.setItem('asha_user_id', data.user_id);
+    // Mirror auth token to IndexedDB so Service Worker can read it (SW has no localStorage)
+    try {
+      const idbReq = indexedDB.open('asha-sync-db', 1);
+      idbReq.onupgradeneeded = (ev) => {
+        const db = ev.target.result;
+        if (!db.objectStoreNames.contains('sync-queue')) db.createObjectStore('sync-queue', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('meta')) db.createObjectStore('meta');
+      };
+      idbReq.onsuccess = (ev) => {
+        const db = ev.target.result;
+        if (db.objectStoreNames.contains('meta')) {
+          const tx = db.transaction('meta', 'readwrite');
+          tx.objectStore('meta').put(data.access_token, 'asha_token');
+        }
+      };
+    } catch {}
     window.location.href = data.role === 'block_officer' ? '/officer' : '/app';
   } catch {
     err.textContent = '⚠ Network error — check connection.'; err.classList.add('visible');

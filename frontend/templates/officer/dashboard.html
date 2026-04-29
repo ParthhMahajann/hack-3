@@ -118,6 +118,15 @@
 </div>
 {% endblock %}
 
+{% block bottom_nav %}
+<nav class="bottom-nav">
+  <button class="bnav-item active"><span class="bnav-icon">📊</span><span class="bnav-label">Dashboard</span></button>
+  <a class="bnav-item" href="/dashboard/export/hmis" target="_blank"><span class="bnav-icon">📥</span><span class="bnav-label">Export</span></a>
+  <button class="bnav-item" onclick="loadDashboard()"><span class="bnav-icon">🔄</span><span class="bnav-label">Refresh</span></button>
+  <button class="bnav-item" onclick="localStorage.clear();window.location.href='/'"><span class="bnav-icon">⏻</span><span class="bnav-label">Logout</span></button>
+</nav>
+{% endblock %}
+
 {% block scripts %}
 <script>
 const token = localStorage.getItem('asha_token');
@@ -239,7 +248,8 @@ async function loadAlerts() {
   try {
     const r = await fetch('/dashboard/alerts', { headers: { Authorization: `Bearer ${token}` } });
     if (!r.ok) return;
-    const alerts = await r.json();
+    const data = await r.json();
+    const alerts = Array.isArray(data) ? data : (data.alerts || []);
     const list = document.getElementById('alerts-list');
 
     if (!alerts.length) {

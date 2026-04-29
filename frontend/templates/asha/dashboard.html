@@ -217,7 +217,8 @@ async function loadAlerts() {
   try {
     const r = await fetch('/dashboard/alerts', { headers: { Authorization: `Bearer ${token}` } });
     if (!r.ok) throw new Error('offline');
-    const alerts    = await r.json();
+    const data    = await r.json();
+    const alerts  = Array.isArray(data) ? data : (data.alerts || []);
     const container = document.getElementById('alert-banners');
     const section   = document.getElementById('alert-banners-section');
     if (!alerts.length) return;

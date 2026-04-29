@@ -18,29 +18,30 @@ async def get_stats(
 ):
     """Aggregated stats for Block Officer or ASHA dashboard."""
     if current_user.role == "asha":
-        patient_q = select(func.count()).where(Patient.asha_id == current_user.id)
-        high_risk_q = select(func.count()).where(
+        patient_q = select(func.count(Patient.id)).where(Patient.asha_id == current_user.id)
+        high_risk_q = select(func.count(Patient.id)).where(
             and_(Patient.asha_id == current_user.id,
                  Patient.current_risk_level.in_(["red", "purple"]))
         )
         # Scope alerts to this ASHA's patients only
         alerts_q = (
-            select(func.count())
+            select(func.count(RiskAlert.id))
+            .select_from(RiskAlert)
             .join(Patient, RiskAlert.patient_id == Patient.id)
             .where(and_(RiskAlert.acknowledged == False,
                         Patient.asha_id == current_user.id))
         )
-        incentive_q = select(func.sum(IncentiveEvent.amount)).where(
+        incentive_q = select(func.coalesce(func.sum(IncentiveEvent.amount), 0)).where(
             and_(IncentiveEvent.asha_id == current_user.id,
                  IncentiveEvent.verified == False)
         )
     else:
         patient_q = select(func.count(Patient.id))
-        high_risk_q = select(func.count()).where(
+        high_risk_q = select(func.count(Patient.id)).where(
             Patient.current_risk_level.in_(["red", "purple"])
         )
-        alerts_q = select(func.count()).where(RiskAlert.acknowledged == False)
-        incentive_q = select(func.sum(IncentiveEvent.amount)).where(
+        alerts_q = select(func.count(RiskAlert.id)).where(RiskAlert.acknowledged == False)
+        incentive_q = select(func.coalesce(func.sum(IncentiveEvent.amount), 0)).where(
             IncentiveEvent.verified == False
         )
 
