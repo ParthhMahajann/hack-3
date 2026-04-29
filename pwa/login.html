@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#1a3a6b">
+<link rel="manifest" href="manifest.json">
+<title>ASHA Saheli — Login</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+body { background: var(--navy-dark); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+
+.login-card {
+  background: #fff; border-radius: var(--radius);
+  width: 100%; max-width: 380px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,.35);
+}
+
+.login-header {
+  background: var(--navy);
+  padding: 24px 24px 20px;
+  text-align: center;
+}
+.login-header .tricolor { margin-bottom: 14px; }
+
+.emblem-wrap { display: flex; justify-content: center; margin-bottom: 10px; }
+
+.login-app-name { font-size: 18px; font-weight: 700; color: #fff; }
+.login-app-sub  { font-size: 11px; color: rgba(255,255,255,.6); margin-top: 3px; font-family: 'Noto Sans Devanagari', sans-serif; }
+.login-nhm      { font-size: 10px; color: rgba(255,255,255,.45); margin-top: 6px; }
+
+.login-body { padding: 24px; }
+
+.login-instruction {
+  font-size: 12.5px; color: var(--muted);
+  background: #F8F9FA; border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 10px 12px;
+  margin-bottom: 20px; line-height: 1.5;
+}
+
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: 12px; font-weight: 600; color: var(--navy); margin-bottom: 5px; }
+
+.input-wrap { position: relative; }
+.input-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 15px; color: #A0AEC0; }
+.form-control { width: 100%; padding: 11px 12px 11px 38px; border: 1.5px solid var(--border); border-radius: var(--radius); font-family: inherit; font-size: 14px; color: var(--text); transition: border-color .15s; }
+.form-control:focus { outline: none; border-color: var(--navy); }
+
+.btn-login {
+  width: 100%; padding: 13px;
+  background: var(--navy); color: #fff;
+  border: none; border-radius: var(--radius);
+  font-family: inherit; font-size: 15px; font-weight: 700;
+  cursor: pointer; letter-spacing: .3px;
+  transition: background .15s;
+  margin-top: 8px;
+}
+.btn-login:hover { background: var(--navy-dark); }
+.btn-login:active { opacity: .9; }
+
+.login-error {
+  background: #FEF2F2; border: 1px solid #FECACA; color: var(--red-text);
+  border-radius: var(--radius); padding: 9px 12px;
+  font-size: 12.5px; font-weight: 500; margin-bottom: 14px;
+  display: none;
+}
+.login-error.visible { display: block; }
+
+.login-footer {
+  background: #F8F9FA; border-top: 1px solid var(--border);
+  padding: 12px 24px; text-align: center;
+  font-size: 10.5px; color: #A0AEC0;
+}
+</style>
+</head>
+<body>
+
+<div class="login-card fade-in">
+  <div class="login-header">
+    <div class="tricolor"></div>
+    <div class="emblem-wrap">
+      <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+        <circle cx="26" cy="24" r="14" fill="none" stroke="#E5C97E" stroke-width="1.5"/>
+        <circle cx="26" cy="24" r="5" fill="none" stroke="#E5C97E" stroke-width="1.2"/>
+        <circle cx="26" cy="24" r="1.6" fill="#E5C97E"/>
+        <g stroke="#E5C97E" stroke-width=".8">
+          <line x1="26" y1="11" x2="26" y2="19" transform="rotate(0 26 24)"/>
+          <line x1="26" y1="11" x2="26" y2="19" transform="rotate(15 26 24)"/>
+          <line x1="26" y1="11" x2="26" y2="19" transform="rotate(30 26 24)"/>
+          <line x1="26" y1="11" x2="26" y2="19" transform="rotate(45 26 24)"/>
+          <line x1="26" y1="11" x2="26" y2="19" transform="rotate(60 26 24)"/>
+          <line x1="26" y1="11" x2="26" y2="19" transform="rotate(75 26 24)"/>
+          <line x1="26" y1="11" x2="26" y2="19" transform="rotate(90 26 24)"/>
+          <line x1="26" y1="11" x2="26" y2="19" transform="rotate(105 26 24)"/>
+          <line x1="26" y1="11" x2="26" y2="19" transform="rotate(120 26 24)"/>
+          <line x1="26" y1="11" x2="26" y2="19" transform="rotate(135 26 24)"/>
+          <line x1="26" y1="11" x2="26" y2="19" transform="rotate(150 26 24)"/>
+          <line x1="26" y1="11" x2="26" y2="19" transform="rotate(165 26 24)"/>
+          <line x1="26" y1="29" x2="26" y2="37" transform="rotate(0 26 24)"/>
+          <line x1="26" y1="29" x2="26" y2="37" transform="rotate(15 26 24)"/>
+          <line x1="26" y1="29" x2="26" y2="37" transform="rotate(30 26 24)"/>
+          <line x1="26" y1="29" x2="26" y2="37" transform="rotate(45 26 24)"/>
+          <line x1="26" y1="29" x2="26" y2="37" transform="rotate(60 26 24)"/>
+          <line x1="26" y1="29" x2="26" y2="37" transform="rotate(75 26 24)"/>
+          <line x1="26" y1="29" x2="26" y2="37" transform="rotate(90 26 24)"/>
+          <line x1="26" y1="29" x2="26" y2="37" transform="rotate(105 26 24)"/>
+          <line x1="26" y1="29" x2="26" y2="37" transform="rotate(120 26 24)"/>
+          <line x1="26" y1="29" x2="26" y2="37" transform="rotate(135 26 24)"/>
+          <line x1="26" y1="29" x2="26" y2="37" transform="rotate(150 26 24)"/>
+          <line x1="26" y1="29" x2="26" y2="37" transform="rotate(165 26 24)"/>
+        </g>
+        <ellipse cx="19" cy="42" rx="4.5" ry="2.5" fill="#E5C97E"/>
+        <ellipse cx="33" cy="42" rx="4.5" ry="2.5" fill="#E5C97E"/>
+        <circle cx="18.5" cy="39" r="2.8" fill="#E5C97E"/>
+        <circle cx="33.5" cy="39" r="2.8" fill="#E5C97E"/>
+        <rect x="22" y="41" width="8" height="2" rx="1" fill="#C9A84C"/>
+      </svg>
+    </div>
+    <div class="login-app-name">ASHA Saheli</div>
+    <div class="login-app-sub">डिजिटल फील्ड डायरी</div>
+    <div class="login-nhm">राष्ट्रीय स्वास्थ्य मिशन · NHM · MoHFW</div>
+  </div>
+
+  <div class="login-body">
+    <div class="login-instruction">
+      अपना ASHA ID और पासवर्ड दर्ज करें।<br>
+      <strong>Enter your ASHA ID and password.</strong> Accounts are set up by your ANM or Block Officer.
+    </div>
+
+    <div id="login-error" class="login-error">
+      ❌ Incorrect ID or password. Please try again.
+    </div>
+
+    <form onsubmit="doLogin(event)">
+      <div class="form-group">
+        <label class="form-label">ASHA ID / User ID</label>
+        <div class="input-wrap">
+          <span class="input-icon">👤</span>
+          <input id="login-id" class="form-control" type="text" placeholder="e.g. MP-BPL-0042" autocomplete="username" inputmode="text">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">पासवर्ड | Password</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔒</span>
+          <input id="login-pw" class="form-control" type="password" placeholder="Enter password" autocomplete="current-password">
+        </div>
+      </div>
+      <button type="submit" class="btn-login">लॉगिन करें | Login →</button>
+    </form>
+  </div>
+
+  <div class="login-footer">
+    समस्या के लिए अपने ANM से संपर्क करें &nbsp;|&nbsp; Contact your ANM for support
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+function doLogin(e) {
+  e.preventDefault();
+  const id = document.getElementById('login-id').value.trim();
+  const pw = document.getElementById('login-pw').value;
+  const err = document.getElementById('login-error');
+  // Demo: any non-empty creds work
+  if (!id || !pw) { err.classList.add('visible'); err.textContent = '⚠ Please enter your ASHA ID and password.'; return; }
+  err.classList.remove('visible');
+  localStorage.setItem('asha_token', 'demo_token_' + Date.now());
+  localStorage.setItem('asha_name', 'Sunita Devi');
+  localStorage.setItem('asha_id', id || 'MP-BPL-0042');
+  window.location.href = 'dashboard.html';
+}
+// If already logged in, skip to dashboard
+if (localStorage.getItem('asha_token')) window.location.href = 'dashboard.html';
+</script>
+</body>
+</html>

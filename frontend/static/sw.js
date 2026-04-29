@@ -163,25 +163,67 @@ function clearSyncQueue(db) {
   });
 }
 
+// NOTE: Service Workers do NOT have access to localStorage.
+// Use IndexedDB 'meta' store instead for all persistent SW state.
+
+function _getMetaValue(key) {
+  return new Promise((resolve) => {
+    const req = indexedDB.open("asha-sync-db", 1);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(SYNC_QUEUE_KEY))
+        db.createObjectStore(SYNC_QUEUE_KEY, { keyPath: "id" });
+      if (!db.objectStoreNames.contains("meta"))
+        db.createObjectStore("meta");
+    };
+    req.onsuccess = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains("meta")) { resolve(null); return; }
+      const tx = db.transaction("meta", "readonly");
+      const r = tx.objectStore("meta").get(key);
+      r.onsuccess = () => resolve(r.result ?? null);
+      r.onerror = () => resolve(null);
+    };
+    req.onerror = () => resolve(null);
+  });
+}
+
+function _setMetaValue(key, value) {
+  return new Promise((resolve) => {
+    const req = indexedDB.open("asha-sync-db", 1);
+    req.onsuccess = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains("meta")) { resolve(); return; }
+      const tx = db.transaction("meta", "readwrite");
+      tx.objectStore("meta").put(value, key);
+      tx.oncomplete = resolve;
+      tx.onerror = () => resolve();
+    };
+    req.onerror = () => resolve();
+  });
+}
+
 async function getAuthToken() {
-  return localStorage ? localStorage.getItem("asha_token") : null;
+  // Auth token is stored by the main page into IndexedDB meta store
+  return _getMetaValue("asha_token");
 }
 
 async function getDeviceId() {
-  let id = localStorage ? localStorage.getItem("asha_device_id") : null;
+  let id = await _getMetaValue("asha_device_id");
   if (!id) {
     id = "dev-" + Math.random().toString(36).slice(2);
-    localStorage && localStorage.setItem("asha_device_id", id);
+    await _setMetaValue("asha_device_id", id);
   }
   return id;
 }
 
 async function getLastSyncTs() {
-  return parseFloat(localStorage ? localStorage.getItem("last_sync_ts") || "0" : "0");
+  const val = await _getMetaValue("last_sync_ts");
+  return parseFloat(val || "0");
 }
 
 async function setLastSyncTs(ts) {
-  localStorage && localStorage.setItem("last_sync_ts", String(ts));
+  await _setMetaValue("last_sync_ts", String(ts));
 }
 
 async function mergeServerChanges(changes) {

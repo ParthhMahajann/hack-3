@@ -1,0 +1,33 @@
+{
+  "name": "ASHA Saheli — डिजिटल फील्ड डायरी",
+  "short_name": "ASHA Saheli",
+  "description": "NHM Digital Field Diary for ASHA Workers",
+  "start_url": "./login.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#1a3a6b",
+  "background_color": "#1a3a6b",
+  "lang": "hi",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' fill='%231a3a6b'/><circle cx='96' cy='88' r='44' fill='none' stroke='%23E5C97E' stroke-width='5'/><circle cx='96' cy='88' r='16' fill='none' stroke='%23E5C97E' stroke-width='4'/><circle cx='96' cy='88' r='5' fill='%23E5C97E'/></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["health", "medical"],
+  "shortcuts": [
+    {
+      "name": "Log Visit",
+      "short_name": "Log Visit",
+      "url": "./visit.html",
+      "description": "Quickly log a patient visit"
+    },
+    {
+      "name": "New Patient",
+      "short_name": "New Patient",
+      "url": "./new-patient.html",
+      "description": "Register a new patient"
+    }
+  ]
+}

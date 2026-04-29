@@ -1,68 +1,126 @@
 {% extends "base.html" %}
 {% block title %}My Patients — ASHA Saheli{% endblock %}
-{% block topbar_sub %}<span id="asha-name">ASHA Worker</span>{% endblock %}
+{% block topbar_sub %}<span id="worker-name-top">ASHA Worker</span>{% endblock %}
+
+{% block head %}
+<style>
+.alert-strip { margin: 0 14px 8px; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+.alert-strip-item { padding: 11px 14px; border-left: 4px solid transparent; border-bottom: 1px solid var(--border); background: #fff; display: flex; align-items: flex-start; gap: 10px; }
+.alert-strip-item:last-child { border-bottom: none; }
+.alert-strip-item.purple { border-left-color: var(--purple-text); background: var(--purple-bg); }
+.alert-strip-item.red    { border-left-color: var(--red-text);    background: var(--red-bg); }
+.alert-strip-item.yellow { border-left-color: #CA8A04;            background: var(--yellow-bg); }
+.alert-body { flex: 1; min-width: 0; }
+.alert-name  { font-size: 13px; font-weight: 700; }
+.alert-score { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.alert-flags { font-size: 11.5px; color: #374151; margin-top: 2px; line-height: 1.4; }
+.alert-ts    { font-size: 10px; color: #9CA3AF; margin-top: 3px; }
+.alert-side  { flex-shrink: 0; text-align: right; }
+.overdue-card { margin: 0 14px 8px; background: #fff; border: 1px solid var(--border); border-radius: var(--radius); border-left: 4px solid #CA8A04; padding: 11px 14px; }
+.overdue-card.urgent { border-left-color: var(--red-text); background: var(--red-bg); }
+.overdue-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.overdue-name { font-size: 13.5px; font-weight: 700; }
+.overdue-meta { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.overdue-days { font-size: 11px; font-weight: 700; color: var(--red-text); background: #FEE2E2; padding: 2px 7px; border-radius: 10px; white-space: nowrap; flex-shrink: 0; }
+.overdue-actions { display: flex; gap: 7px; flex-wrap: wrap; }
+.patient-card { margin: 0 14px 10px; background: #fff; border: 1px solid var(--border); border-radius: var(--radius); border-left: 4px solid transparent; overflow: hidden; }
+.patient-card.purple { border-left-color: var(--purple-text); }
+.patient-card.red    { border-left-color: var(--red-text); }
+.patient-card.yellow { border-left-color: #CA8A04; }
+.patient-card.green  { border-left-color: var(--green-text); }
+.pc-header { padding: 11px 12px 8px; display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.pc-name  { font-size: 14px; font-weight: 700; }
+.pc-meta  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.pc-right { text-align: right; flex-shrink: 0; }
+.pc-score { font-size: 12px; font-weight: 700; color: var(--navy); margin-top: 3px; }
+.pc-bar   { padding: 0 12px 8px; }
+.pc-actions { padding: 7px 12px 11px; display: flex; gap: 7px; border-top: 1px solid #F3F4F6; }
+.filter-row { display: flex; gap: 7px; padding: 12px 14px 8px; overflow-x: auto; scrollbar-width: none; }
+.filter-row::-webkit-scrollbar { display: none; }
+.chip { flex-shrink: 0; font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: var(--radius); border: 1.5px solid var(--navy); color: var(--navy); background: transparent; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 4px; transition: background .13s, color .13s; }
+.chip.active, .chip:hover { background: var(--navy); color: #fff; }
+.chip-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.incentive-section { margin: 0 14px 4px; }
+.incentive-card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+.inc-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.inc-amount { font-size: 22px; font-weight: 700; color: var(--navy); }
+.inc-target { font-size: 12px; color: var(--muted); }
+.inc-bar-track { height: 10px; background: #E5E7EB; border-radius: 5px; overflow: hidden; margin-bottom: 8px; }
+.inc-bar-fill  { height: 100%; border-radius: 5px; background: var(--india-green); transition: width .5s; }
+.inc-legend { display: flex; gap: 12px; }
+.inc-legend-item { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+.inc-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+</style>
+{% endblock %}
 
 {% block content %}
-<!-- Stats row -->
-<div class="stats-grid" id="stats-grid">
-  <div class="stat-tile">
+<!-- STAT GRID -->
+<div class="stat-grid" style="padding-top:14px;">
+  <div class="stat-card">
     <div class="stat-num" id="stat-total">—</div>
-    <div class="stat-label">Patients</div>
+    <div class="stat-label">मरीज़ | Patients</div>
   </div>
-  <div class="stat-tile alert-tile">
-    <div class="stat-num" id="stat-highrisk">—</div>
+  <div class="stat-card">
+    <div class="stat-num red" id="stat-highrisk">—</div>
     <div class="stat-label">High Risk</div>
   </div>
-  <div class="stat-tile">
-    <div class="stat-num" id="stat-alerts">—</div>
-    <div class="stat-label">Alerts</div>
+  <div class="stat-card">
+    <div class="stat-num orange" id="stat-alerts">—</div>
+    <div class="stat-label">अलर्ट | Alerts</div>
   </div>
-  <div class="stat-tile incentive-tile">
-    <div class="stat-num" id="stat-incentive">—</div>
-    <div class="stat-label">Pending ₹</div>
+  <div class="stat-card">
+    <div class="stat-num" id="stat-incentive" style="font-size:18px;padding-top:4px;">—</div>
+    <div class="stat-label">JSY लंबित</div>
   </div>
 </div>
 
-<!-- Unacknowledged alerts -->
-<div id="alert-banners"></div>
+<!-- INCENTIVE PROGRESS -->
+<div id="incentive-progress-section" style="display:none;">
+  <div class="section-label">💰 JSY प्रोत्साहन | Incentive Progress</div>
+  <div class="incentive-section">
+    <div class="incentive-card" id="incentive-progress-bar-wrap"></div>
+  </div>
+</div>
 
-<!-- Overdue Visits -->
-<div id="overdue-section" style="display:none;margin-bottom:0.75rem;">
-  <div class="section-title" style="color:#e65100;">⏰ Overdue Visits</div>
+<!-- ALERTS -->
+<div id="alert-banners-section" style="display:none;">
+  <div class="section-label">🔴 Unacknowledged Alerts</div>
+  <div class="alert-strip" id="alert-banners"></div>
+</div>
+
+<!-- OVERDUE VISITS -->
+<div id="overdue-section" style="display:none;">
+  <div class="section-label">⏰ Overdue Visits</div>
   <div id="overdue-list"></div>
 </div>
 
-<!-- Incentive Progress -->
-<div id="incentive-progress-card" style="display:none;" class="card" style="margin-bottom:0.75rem;">
-  <div class="section-title" style="margin-top:0;">💰 Monthly Incentive Progress</div>
-  <div id="incentive-progress-bar-wrap"></div>
+<!-- FILTER CHIPS -->
+<div class="filter-row">
+  <button class="chip active" id="tab-all" onclick="filterPatients('all',this)">सभी | All</button>
+  <button class="chip" id="tab-purple" onclick="filterPatients('purple',this)"><span class="chip-dot" style="background:var(--purple-text)"></span> Critical</button>
+  <button class="chip" id="tab-red" onclick="filterPatients('red',this)"><span class="chip-dot" style="background:var(--red-text)"></span> Red</button>
+  <button class="chip" id="tab-maternal" onclick="filterPatients('maternal',this)">Maternal</button>
+  <button class="chip" id="tab-child" onclick="filterPatients('child',this)">Child</button>
 </div>
 
-<!-- Filter tabs -->
-<div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;overflow-x:auto;padding-bottom:0.25rem;">
-  <button class="btn btn-primary btn-sm" onclick="filterPatients('all')" id="tab-all">All</button>
-  <button class="btn btn-ghost btn-sm" onclick="filterPatients('purple')" id="tab-purple" style="color:#6a1b9a;border-color:#6a1b9a;">🔴 Critical</button>
-  <button class="btn btn-ghost btn-sm" onclick="filterPatients('red')" id="tab-red" style="color:#c62828;border-color:#c62828;">⚠ Red</button>
-  <button class="btn btn-ghost btn-sm" onclick="filterPatients('maternal')" id="tab-maternal">Maternal</button>
-  <button class="btn btn-ghost btn-sm" onclick="filterPatients('child')" id="tab-child">Child</button>
-</div>
-
-<!-- Patient list -->
+<!-- PATIENT LIST -->
+<div class="section-label">👥 Patient List</div>
 <div id="patient-list">
-  <div class="empty-state"><div class="empty-icon">⏳</div>Loading patients…</div>
+  <div style="text-align:center;padding:32px 14px;color:var(--muted);">
+    <div style="font-size:28px;margin-bottom:8px;">⏳</div>Loading patients…
+  </div>
 </div>
 
-<!-- FAB: New Visit -->
 <button class="fab" onclick="window.location.href='/app/visit/new'" title="Log New Visit">+</button>
 {% endblock %}
 
 {% block bottom_nav %}
 <nav class="bottom-nav">
-  <a class="nav-item active" href="/app"><div class="nav-icon">🏠</div>Home</a>
-  <a class="nav-item" href="/app/patient/new"><div class="nav-icon">➕</div>New Patient</a>
-  <a class="nav-item" href="/app/visit/new"><div class="nav-icon">📋</div>Log Visit</a>
-  <a class="nav-item" href="/app/incentives"><div class="nav-icon">💰</div>Incentives</a>
-  <a class="nav-item" href="/app/research"><div class="nav-icon">📚</div>Research</a>
+  <button class="bnav-item active" onclick="window.location.href='/app'"><span class="bnav-icon">🏠</span><span class="bnav-label">Home</span></button>
+  <button class="bnav-item" onclick="window.location.href='/app/patient/new'"><span class="bnav-icon">➕</span><span class="bnav-label">New Patient</span></button>
+  <button class="bnav-item" onclick="window.location.href='/app/visit/new'"><span class="bnav-icon">📋</span><span class="bnav-label">Log Visit</span></button>
+  <button class="bnav-item" onclick="window.location.href='/app/incentives'"><span class="bnav-icon">💰</span><span class="bnav-label">Incentives</span></button>
+  <button class="bnav-item" onclick="SyncManager.triggerManualSync();return false;"><span class="bnav-icon">🔄</span><span class="bnav-label">Sync</span></button>
 </nav>
 {% endblock %}
 
@@ -71,17 +129,12 @@
 const token = localStorage.getItem('asha_token');
 if (!token) window.location.href = '/';
 
-document.getElementById('asha-name').textContent = localStorage.getItem('asha_name') || 'ASHA';
+document.getElementById('worker-name-top').textContent = localStorage.getItem('asha_name') || 'ASHA Worker';
 
 let _allPatients = [];
 let _currentFilter = 'all';
 
-const RISK_COLORS = {
-  purple: { bg: '#f3e5f5', border: 'purple', badge: 'risk-purple', icon: '🚨' },
-  red:    { bg: '#fff8f8', border: 'red',    badge: 'risk-red',    icon: '⚠️' },
-  yellow: { bg: '#fffde7', border: 'yellow', badge: 'risk-yellow', icon: '⚡' },
-  green:  { bg: '#f9fffe', border: 'green',  badge: 'risk-green',  icon: '✅' },
-};
+const RISK_HINDI = { purple: 'अति-गंभीर', red: 'उच्च जोखिम', yellow: 'निगरानी', green: 'सामान्य' };
 
 async function loadDashboard() {
   await loadStats();
@@ -94,25 +147,24 @@ async function loadOverdue() {
     if (!r.ok) return;
     const overdue = await r.json();
     const section = document.getElementById('overdue-section');
-    const list = document.getElementById('overdue-list');
-    if (!overdue.length) { section.style.display = 'none'; return; }
+    const list    = document.getElementById('overdue-list');
+    if (!overdue.length) return;
     section.style.display = '';
-    const RISK_ICONS = { purple: '🚨', red: '⚠️', yellow: '⚡', green: '✅' };
     list.innerHTML = overdue.map(o => {
       const urgent = o.days_overdue > 14;
-      return `<div class="card" style="border-left:4px solid ${urgent ? '#c62828' : '#f9a825'};padding:0.75rem;margin-bottom:0.5rem;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+      const phone  = o.phone ? `<button class="btn btn-outline btn-sm" onclick="window.location.href='tel:${o.phone}'">📞 Call</button>` : '';
+      return `<div class="overdue-card ${urgent ? 'urgent' : ''}">
+        <div class="overdue-header">
           <div>
-            <strong>${o.patient_name}</strong>
-            <span class="risk-badge risk-${o.risk_level}" style="margin-left:0.4rem;font-size:0.65rem;">${RISK_ICONS[o.risk_level] || ''} ${o.risk_level.toUpperCase()}</span>
-            <div class="text-sm" style="color:${urgent ? '#c62828' : '#e65100'};margin-top:0.2rem;">
-              ⏰ ${o.days_overdue} day${o.days_overdue !== 1 ? 's' : ''} overdue — ${o.recommended_visit_type.replace(/_/g, ' ')}
-            </div>
-            <div class="text-sm" style="color:#888;">${o.last_visit_date ? 'Last visit: ' + o.last_visit_date : 'Never visited'}</div>
+            <div class="overdue-name">${o.patient_name}</div>
+            <div class="overdue-meta">${o.recommended_visit_type.replace(/_/g,' ')} · ${o.last_visit_date ? 'Last: ' + o.last_visit_date : 'Never visited'}</div>
           </div>
-          ${o.phone ? `<a class="btn btn-ghost btn-sm" href="tel:${o.phone}" style="flex-shrink:0;">📞</a>` : ''}
+          <span class="overdue-days" ${urgent ? '' : 'style="background:#FEF3C7;color:#92400E;"'}>${o.days_overdue} day${o.days_overdue !== 1 ? 's' : ''} overdue</span>
         </div>
-        <button class="btn btn-primary btn-sm" style="margin-top:0.5rem;width:100%;" onclick="logVisit('${o.patient_id}','${o.patient_type}')">Log Visit Now</button>
+        <div class="overdue-actions">
+          <button class="btn ${urgent ? 'btn-danger' : 'btn-navy'} btn-sm" onclick="logVisit('${o.patient_id}','${o.patient_type}')">📋 Log Visit Now</button>
+          ${phone}
+        </div>
       </div>`;
     }).join('');
   } catch {}
@@ -122,23 +174,22 @@ async function loadIncentiveProgress() {
   try {
     const r = await fetch('/dashboard/incentives', { headers: { Authorization: `Bearer ${token}` } });
     if (!r.ok) return;
-    const data = await r.json();
+    const data   = await r.json();
     const earned = data.total_earned || 0;
+    if (!earned) return;
     const MONTHLY_TARGET = 600;
     const pct = Math.min(Math.round(earned / MONTHLY_TARGET * 100), 100);
-    const card = document.getElementById('incentive-progress-card');
-    const wrap = document.getElementById('incentive-progress-bar-wrap');
-    if (!earned) return;
-    card.style.display = '';
-    wrap.innerHTML = `
-      <div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:0.3rem;">
-        <span>₹${earned.toLocaleString('en-IN')} earned</span>
-        <span style="color:#757575;">Target: ₹${MONTHLY_TARGET}/mo</span>
+    document.getElementById('incentive-progress-section').style.display = '';
+    document.getElementById('incentive-progress-bar-wrap').innerHTML = `
+      <div class="inc-row">
+        <div><div class="inc-amount">₹${earned.toLocaleString('en-IN')}</div><div class="inc-target">of ₹${MONTHLY_TARGET} monthly target</div></div>
+        <span style="font-size:13px;font-weight:700;color:var(--india-green);">${pct}%</span>
       </div>
-      <div class="risk-bar-track">
-        <div class="risk-bar-fill ${pct >= 100 ? 'green' : pct >= 50 ? 'yellow' : 'red'}" style="width:${pct}%;"></div>
-      </div>
-      <div style="font-size:0.75rem;color:#757575;margin-top:0.3rem;">${pct}% of monthly target · ₹${data.total_verified || 0} verified · ₹${data.pending_payment || 0} pending</div>`;
+      <div class="inc-bar-track"><div class="inc-bar-fill" style="width:${pct}%"></div></div>
+      <div class="inc-legend">
+        <div class="inc-legend-item"><span class="inc-dot" style="background:var(--india-green)"></span> Verified: ₹${data.total_verified || 0}</div>
+        <div class="inc-legend-item"><span class="inc-dot" style="background:#FCD34D"></span> Pending: ₹${data.pending_payment || 0}</div>
+      </div>`;
   } catch {}
 }
 
@@ -152,14 +203,13 @@ async function loadStats() {
     document.getElementById('stat-alerts').textContent    = d.unacknowledged_alerts;
     document.getElementById('stat-incentive').textContent = '₹' + (d.pending_incentives || 0).toLocaleString('en-IN');
   } catch {
-    // Offline fallback: compute stats from local IndexedDB
     const patients = await window.AshaDB.getPatients();
     const highRisk = patients.filter(p => ['red','purple'].includes(p.current_risk_level)).length;
     const queue    = await window.AshaDB.getSyncQueue();
     document.getElementById('stat-total').textContent     = patients.length;
     document.getElementById('stat-highrisk').textContent  = highRisk;
     document.getElementById('stat-alerts').textContent    = highRisk;
-    document.getElementById('stat-incentive').textContent = queue.length > 0 ? `${queue.length} pending sync` : '—';
+    document.getElementById('stat-incentive').textContent = queue.length > 0 ? `${queue.length} pending` : '—';
   }
 }
 
@@ -167,118 +217,102 @@ async function loadAlerts() {
   try {
     const r = await fetch('/dashboard/alerts', { headers: { Authorization: `Bearer ${token}` } });
     if (!r.ok) throw new Error('offline');
-    const alerts = await r.json();
+    const data    = await r.json();
+    const alerts  = Array.isArray(data) ? data : (data.alerts || []);
     const container = document.getElementById('alert-banners');
-    container.innerHTML = '';
-    alerts.slice(0, 3).forEach(a => {
-      const c = RISK_COLORS[a.risk_level] || RISK_COLORS.green;
-      container.innerHTML += `
-        <div class="alert-banner ${a.risk_level}">
-          <div class="alert-banner-icon">${c.icon}</div>
-          <div>
-            <div class="alert-banner-title">${a.patient_name} — Score ${a.risk_score}/100</div>
-            <div class="alert-banner-body">${(a.triggered_params || []).slice(0,2).join(' · ')}</div>
-          </div>
-        </div>`;
-    });
+    const section   = document.getElementById('alert-banners-section');
+    if (!alerts.length) return;
+    section.style.display = '';
+    container.innerHTML = alerts.slice(0, 3).map(a => `
+      <div class="alert-strip-item ${a.risk_level}">
+        <div class="alert-body">
+          <div class="alert-name">${a.patient_name}</div>
+          <div class="alert-score">Score ${a.risk_score}/100</div>
+          <div class="alert-flags">${(a.triggered_params || []).slice(0,2).join(' · ')}</div>
+          <div class="alert-ts">${a.created_at ? a.created_at.slice(0,16) : ''}</div>
+        </div>
+        <div class="alert-side"><span class="risk-badge ${a.risk_level}">${RISK_HINDI[a.risk_level] || a.risk_level}</span></div>
+      </div>`).join('');
   } catch {
-    // Offline: show high-risk patients from IndexedDB instead
-    const patients = await window.AshaDB.getPatients();
-    const critical = patients.filter(p => ['red','purple'].includes(p.current_risk_level));
+    const patients  = await window.AshaDB.getPatients();
+    const critical  = patients.filter(p => ['red','purple'].includes(p.current_risk_level));
     const container = document.getElementById('alert-banners');
-    container.innerHTML = '';
-    critical.slice(0, 3).forEach(p => {
-      const c = RISK_COLORS[p.current_risk_level] || RISK_COLORS.red;
-      container.innerHTML += `
-        <div class="alert-banner ${p.current_risk_level}">
-          <div class="alert-banner-icon">${c.icon}</div>
-          <div>
-            <div class="alert-banner-title">${p.name} — Score ${p.current_risk_score || 0}/100</div>
-            <div class="alert-banner-body">Offline — data from local cache</div>
-          </div>
-        </div>`;
-    });
+    const section   = document.getElementById('alert-banners-section');
+    if (!critical.length) return;
+    section.style.display = '';
+    container.innerHTML = critical.slice(0, 3).map(p => `
+      <div class="alert-strip-item ${p.current_risk_level}">
+        <div class="alert-body">
+          <div class="alert-name">${p.name}</div>
+          <div class="alert-score">Score ${p.current_risk_score || 0}/100 · Offline cache</div>
+        </div>
+        <div class="alert-side"><span class="risk-badge ${p.current_risk_level}">${RISK_HINDI[p.current_risk_level] || p.current_risk_level}</span></div>
+      </div>`).join('');
   }
 }
 
 async function loadPatients() {
   try {
     const r = await fetch('/patients/', { headers: { Authorization: `Bearer ${token}` } });
-    if (r.ok) { _allPatients = await r.json(); }
+    if (r.ok) _allPatients = await r.json();
   } catch {
     _allPatients = await window.AshaDB.getPatients();
   }
   renderPatients();
 }
 
-function filterPatients(f) {
+function filterPatients(f, btn) {
   _currentFilter = f;
-  document.querySelectorAll('[id^=tab-]').forEach(b => b.classList.replace('btn-primary', 'btn-ghost'));
-  const t = document.getElementById('tab-' + f);
-  if (t) t.classList.replace('btn-ghost', 'btn-primary');
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  if (btn) btn.classList.add('active');
   renderPatients();
 }
 
 function renderPatients() {
   const list = document.getElementById('patient-list');
   let patients = _allPatients;
-
-  if (_currentFilter === 'purple')  patients = patients.filter(p => p.current_risk_level === 'purple');
-  else if (_currentFilter === 'red') patients = patients.filter(p => p.current_risk_level === 'red');
+  if (_currentFilter === 'purple')        patients = patients.filter(p => p.current_risk_level === 'purple');
+  else if (_currentFilter === 'red')      patients = patients.filter(p => p.current_risk_level === 'red');
   else if (_currentFilter === 'maternal') patients = patients.filter(p => p.patient_type === 'maternal');
   else if (_currentFilter === 'child')    patients = patients.filter(p => p.patient_type === 'child');
 
-  // Sort: purple first, then red, yellow, green
   const order = { purple: 0, red: 1, yellow: 2, green: 3 };
   patients.sort((a,b) => (order[a.current_risk_level]??4) - (order[b.current_risk_level]??4));
 
   if (!patients.length) {
-    list.innerHTML = '<div class="empty-state"><div class="empty-icon">👩‍⚕️</div><p>No patients found.</p></div>';
+    list.innerHTML = '<div style="text-align:center;padding:32px 14px;color:var(--muted);"><div style="font-size:28px;margin-bottom:8px;">👩‍⚕️</div>No patients found.</div>';
     return;
   }
-
   list.innerHTML = patients.map(p => {
-    const rl = p.current_risk_level || 'green';
-    const c = RISK_COLORS[rl] || RISK_COLORS.green;
+    const rl    = p.current_risk_level || 'green';
     const score = p.current_risk_score || 0;
     const ptype = p.patient_type === 'maternal' ? '🤰 Maternal' : '👶 Child';
-    const detail = p.patient_type === 'maternal'
-      ? (p.edd ? `EDD: ${p.edd}` : '') : (p.birth_date ? `DOB: ${p.birth_date}` : '');
-
-    return `
-    <div class="card patient-card risk-border-${rl}" style="background:${c.bg};">
-      <div class="card-header">
+    const detail = p.patient_type === 'maternal' ? (p.edd ? `EDD: ${p.edd}` : '') : (p.birth_date ? `DOB: ${p.birth_date}` : '');
+    const phone  = p.phone ? `<button class="btn btn-sm" style="border:1.5px solid var(--saffron);color:var(--saffron);background:transparent;" onclick="window.location.href='tel:${p.phone}'">📞</button>` : '';
+    return `<div class="patient-card ${rl}">
+      <div class="pc-header">
         <div>
-          <div class="card-title">${p.name}</div>
-          <div class="card-sub">${ptype} · ${p.address || ''}</div>
-          ${detail ? `<div class="card-sub">${detail}</div>` : ''}
+          <div class="pc-name">${p.name}</div>
+          <div class="pc-meta">${ptype}${p.address ? ' · ' + p.address : ''}</div>
+          ${detail ? `<div class="pc-meta">${detail}</div>` : ''}
         </div>
-        <div style="text-align:right;">
-          <span class="risk-badge risk-${rl}">${c.icon} ${rl.toUpperCase()}</span>
-          <div class="text-sm" style="margin-top:0.3rem;color:#555;">${score}/100</div>
-        </div>
-      </div>
-      <div class="risk-bar-wrap">
-        <div class="risk-bar-track">
-          <div class="risk-bar-fill ${rl}" style="width:${Math.min(score,100)}%"></div>
+        <div class="pc-right">
+          <span class="risk-badge ${rl}">${RISK_HINDI[rl] || rl}</span>
+          <div class="pc-score">${score}/100</div>
         </div>
       </div>
-      <div style="display:flex;gap:0.5rem;margin-top:0.75rem;">
-        <button class="btn btn-primary btn-sm" onclick="logVisit('${p.id}','${p.patient_type}')">Log Visit</button>
-        <button class="btn btn-ghost btn-sm" onclick="viewHistory('${p.id}')">History</button>
-        ${p.phone ? `<a class="btn btn-ghost btn-sm" href="tel:${p.phone}">📞 Call</a>` : ''}
+      <div class="pc-bar"><div class="risk-bar-track"><div class="risk-bar-fill ${rl}" style="width:${Math.min(score,100)}%"></div></div></div>
+      <div class="pc-actions">
+        <button class="btn btn-navy btn-sm" onclick="logVisit('${p.id}','${p.patient_type}')">📋 Log Visit</button>
+        <button class="btn btn-outline btn-sm" onclick="viewHistory('${p.id}')">📜 History</button>
+        ${phone}
       </div>
     </div>`;
   }).join('');
 }
 
-function logVisit(patientId, patientType) {
-  window.location.href = `/app/visit/new?patient_id=${patientId}&type=${patientType}`;
-}
-
-function viewHistory(patientId) {
-  window.location.href = `/app/visit/new?patient_id=${patientId}&view=history`;
-}
+function logVisit(pid, ptype) { window.location.href = `/app/visit/new?patient_id=${pid}&type=${ptype}`; }
+function viewHistory(pid)     { window.location.href = `/app/visit/new?patient_id=${pid}&view=history`; }
 
 loadDashboard();
 </script>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#1a3a6b">
+<link rel="manifest" href="manifest.json">
+<title>ASHA Saheli PWA</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+body { background: var(--navy-dark); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 32px 20px; gap: 20px; }
+.index-card {
+  background: #fff; border-radius: var(--radius);
+  width: 100%; max-width: 400px;
+  overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,.35);
+}
+.index-header {
+  background: var(--navy); padding: 22px 24px 18px; text-align: center;
+}
+.index-title { font-size: 18px; font-weight: 700; color: #fff; margin-top: 10px; }
+.index-sub   { font-size: 11px; color: rgba(255,255,255,.6); margin-top: 3px; font-family: 'Noto Sans Devanagari', sans-serif; }
+.index-nhm   { font-size: 10px; color: rgba(255,255,255,.4); margin-top: 6px; }
+.index-body  { padding: 20px; }
+.index-section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin-bottom: 8px; }
+.screen-links { display: flex; flex-direction: column; gap: 7px; margin-bottom: 16px; }
+.screen-link {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 14px; border-radius: var(--radius);
+  border: 1.5px solid var(--border); background: #FAFBFC;
+  text-decoration: none; color: var(--text);
+  transition: border-color .13s, background .13s;
+}
+.screen-link:hover { border-color: var(--navy); background: #EEF2FF; }
+.screen-link .sl-icon { font-size: 20px; flex-shrink: 0; }
+.screen-link .sl-body {}
+.screen-link .sl-title { font-size: 13px; font-weight: 700; color: var(--navy); }
+.screen-link .sl-desc  { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.screen-link .sl-badge {
+  margin-left: auto; font-size: 10px; font-weight: 700; padding: 2px 8px;
+  border-radius: 10px; flex-shrink: 0;
+}
+.badge-mobile  { background: #EEF2FF; color: var(--navy); border: 1px solid #C7D2FE; }
+.badge-desktop { background: #FFF7ED; color: #92400E; border: 1px solid #FDE68A; }
+.index-footer {
+  background: #F8F9FA; border-top: 1px solid var(--border);
+  padding: 12px 20px; font-size: 10.5px; color: #A0AEC0;
+  text-align: center; line-height: 1.6;
+}
+</style>
+</head>
+<body>
+
+<div class="index-card fade-in">
+  <div class="index-header">
+    <div class="tricolor"></div>
+    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" style="margin-top:12px;">
+      <circle cx="24" cy="22" r="12" fill="none" stroke="#E5C97E" stroke-width="1.4"/>
+      <circle cx="24" cy="22" r="4" fill="none" stroke="#E5C97E" stroke-width="1.2"/>
+      <circle cx="24" cy="22" r="1.4" fill="#E5C97E"/>
+      <g stroke="#E5C97E" stroke-width=".75">
+        <line x1="24" y1="11" x2="24" y2="18" transform="rotate(0 24 22)"/>
+        <line x1="24" y1="11" x2="24" y2="18" transform="rotate(15 24 22)"/>
+        <line x1="24" y1="11" x2="24" y2="18" transform="rotate(30 24 22)"/>
+        <line x1="24" y1="11" x2="24" y2="18" transform="rotate(45 24 22)"/>
+        <line x1="24" y1="11" x2="24" y2="18" transform="rotate(60 24 22)"/>
+        <line x1="24" y1="11" x2="24" y2="18" transform="rotate(75 24 22)"/>
+        <line x1="24" y1="11" x2="24" y2="18" transform="rotate(90 24 22)"/>
+        <line x1="24" y1="11" x2="24" y2="18" transform="rotate(105 24 22)"/>
+        <line x1="24" y1="11" x2="24" y2="18" transform="rotate(120 24 22)"/>
+        <line x1="24" y1="11" x2="24" y2="18" transform="rotate(135 24 22)"/>
+        <line x1="24" y1="11" x2="24" y2="18" transform="rotate(150 24 22)"/>
+        <line x1="24" y1="11" x2="24" y2="18" transform="rotate(165 24 22)"/>
+        <line x1="24" y1="26" x2="24" y2="33" transform="rotate(0 24 22)"/>
+        <line x1="24" y1="26" x2="24" y2="33" transform="rotate(15 24 22)"/>
+        <line x1="24" y1="26" x2="24" y2="33" transform="rotate(30 24 22)"/>
+        <line x1="24" y1="26" x2="24" y2="33" transform="rotate(45 24 22)"/>
+        <line x1="24" y1="26" x2="24" y2="33" transform="rotate(60 24 22)"/>
+        <line x1="24" y1="26" x2="24" y2="33" transform="rotate(75 24 22)"/>
+        <line x1="24" y1="26" x2="24" y2="33" transform="rotate(90 24 22)"/>
+        <line x1="24" y1="26" x2="24" y2="33" transform="rotate(105 24 22)"/>
+        <line x1="24" y1="26" x2="24" y2="33" transform="rotate(120 24 22)"/>
+        <line x1="24" y1="26" x2="24" y2="33" transform="rotate(135 24 22)"/>
+        <line x1="24" y1="26" x2="24" y2="33" transform="rotate(150 24 22)"/>
+        <line x1="24" y1="26" x2="24" y2="33" transform="rotate(165 24 22)"/>
+      </g>
+      <ellipse cx="18" cy="38" rx="3.5" ry="2" fill="#E5C97E"/>
+      <ellipse cx="30" cy="38" rx="3.5" ry="2" fill="#E5C97E"/>
+      <circle cx="17.5" cy="35.5" r="2.2" fill="#E5C97E"/>
+      <circle cx="30.5" cy="35.5" r="2.2" fill="#E5C97E"/>
+    </svg>
+    <div class="index-title">ASHA Saheli</div>
+    <div class="index-sub">डिजिटल फील्ड डायरी — Progressive Web App</div>
+    <div class="index-nhm">राष्ट्रीय स्वास्थ्य मिशन · NHM · MoHFW · Government of India</div>
+  </div>
+
+  <div class="index-body">
+
+    <div class="index-section-label">📱 ASHA Worker Screens — Mobile</div>
+    <div class="screen-links">
+      <a class="screen-link" href="login.html">
+        <span class="sl-icon">🔐</span>
+        <div class="sl-body">
+          <div class="sl-title">Login</div>
+          <div class="sl-desc">ASHA ID + Password · Offline token</div>
+        </div>
+        <span class="sl-badge badge-mobile">Screen 1</span>
+      </a>
+      <a class="screen-link" href="dashboard.html">
+        <span class="sl-icon">🏠</span>
+        <div class="sl-body">
+          <div class="sl-title">ASHA Dashboard</div>
+          <div class="sl-desc">Stats · Alerts · Overdue · Patient list</div>
+        </div>
+        <span class="sl-badge badge-mobile">Screen 2</span>
+      </a>
+      <a class="screen-link" href="new-patient.html">
+        <span class="sl-icon">➕</span>
+        <div class="sl-body">
+          <div class="sl-title">New Patient</div>
+          <div class="sl-desc">Maternal / Child registration · GPS</div>
+        </div>
+        <span class="sl-badge badge-mobile">Screen 3</span>
+      </a>
+      <a class="screen-link" href="visit.html">
+        <span class="sl-icon">📋</span>
+        <div class="sl-body">
+          <div class="sl-title">Log Visit</div>
+          <div class="sl-desc">Vitals · Observations · Live risk score</div>
+        </div>
+        <span class="sl-badge badge-mobile">Screen 4</span>
+      </a>
+      <a class="screen-link" href="incentives.html">
+        <span class="sl-icon">💰</span>
+        <div class="sl-body">
+          <div class="sl-title">JSY Incentives</div>
+          <div class="sl-desc">Earnings · Verified · Pending payments</div>
+        </div>
+        <span class="sl-badge badge-mobile">Screen 5</span>
+      </a>
+    </div>
+
+    <div class="index-section-label">🖥 Block Health Officer — Desktop</div>
+    <div class="screen-links">
+      <a class="screen-link" href="officer.html">
+        <span class="sl-icon">🏛</span>
+        <div class="sl-body">
+          <div class="sl-title">Officer Dashboard</div>
+          <div class="sl-desc">Block overview · Alerts · Charts · Hierarchy</div>
+        </div>
+        <span class="sl-badge badge-desktop">Screen 6</span>
+      </a>
+    </div>
+
+    <div style="background:#F0FDF4;border:1px solid #86EFAC;border-radius:var(--radius);padding:10px 12px;font-size:12px;color:#14532D;line-height:1.6;">
+      ℹ️ <strong>Demo credentials:</strong> any ASHA ID + any password to login.<br>
+      Works offline after first load — Service Worker caches all screens.
+    </div>
+  </div>
+
+  <div class="index-footer">
+    PWA · Offline-first · IndexedDB · Background Sync<br>
+    NHM · MoHFW · Government of India · v1.0
+  </div>
+</div>
+
+<script>
+// Register service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').then(reg => {
+    console.log('[PWA] Service Worker registered', reg.scope);
+  }).catch(err => console.warn('[PWA] SW registration failed', err));
+}
+</script>
+</body>
+</html>
