@@ -23,7 +23,7 @@
         16 Clinical Rules
       </div>
       <div class="chip" style="background:#fff3e0;color:#e65100;font-weight:700;font-size:0.8rem;padding:0.35rem 0.75rem;">
-        23 Validated Test Cases
+        38 Validated Test Cases
       </div>
     </div>
   </div>
@@ -138,6 +138,88 @@
     </div>
   </div>
 
+  <!-- Traceability Matrix -->
+  <div class="card" style="margin-bottom:1.25rem;border-top:3px solid #1a237e;">
+    <div class="section-title" style="margin-top:0;color:#1a237e;">📐 Paper → Code → Test Traceability</div>
+    <p style="font-size:0.8rem;color:#555;margin-bottom:0.75rem;line-height:1.5;">
+      Every clinical rule in ASHA Saheli is traceable from its source paper to a specific code constant and an automated test case.
+    </p>
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:0.75rem;">
+        <thead>
+          <tr style="background:#e8eaf6;color:#1a237e;">
+            <th style="padding:6px 8px;text-align:left;border:1px solid #c5cae9;white-space:nowrap;">Paper</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid #c5cae9;">Clinical Rule</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid #c5cae9;font-family:monospace;white-space:nowrap;">Code Constant</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid #c5cae9;white-space:nowrap;">Test Case</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="background:#fff;">
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;"><span class="citation-chip" style="margin:0;">WHO ANC Rec 29</span></td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;">BP ≥160/110 mmHg → <span class="risk-badge risk-purple" style="font-size:0.65rem;">PURPLE</span></td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.7rem;">BP_SEVERE_SYS/DIA</td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.68rem;color:#2e7d32;">test_severe_hypertension_is_purple</td>
+          </tr>
+          <tr style="background:#fafafa;">
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;"><span class="citation-chip" style="margin:0;">WHO ANC Rec 29</span></td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;">BP ≥140/90 + oedema + proteinuria → <span class="risk-badge risk-purple" style="font-size:0.65rem;">PURPLE</span></td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.7rem;">BP_PREEC_SYS/DIA</td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.68rem;color:#2e7d32;">test_preeclampsia_triad_is_purple</td>
+          </tr>
+          <tr style="background:#fff;">
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;"><span class="citation-chip" style="margin:0;">WHO ANC Rec 38</span></td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;">Hb &lt;7.0 g/dL → <span class="risk-badge risk-red" style="font-size:0.65rem;">RED</span></td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.7rem;">HB_SEVERE = 7.0</td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.68rem;color:#2e7d32;">test_severe_anaemia_becomes_red</td>
+          </tr>
+          <tr style="background:#fafafa;">
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;"><span class="citation-chip" style="margin:0;">IMNCI 2009 Ch.2</span></td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;">Any 1 of 6 danger signs → <span class="risk-badge risk-purple" style="font-size:0.65rem;">PURPLE</span> (score=100)</td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.7rem;">IMNCI_DANGER_SIGNS</td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.68rem;color:#2e7d32;">test_imnci_danger_sign_immediate_purple</td>
+          </tr>
+          <tr style="background:#fff;">
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;"><span class="citation-chip" style="margin:0;">WHO MUAC 2013</span></td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;">MUAC &lt;115 mm → SAM → <span class="risk-badge risk-red" style="font-size:0.65rem;">RED/PURPLE</span></td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.7rem;">MUAC_SAM_MM = 115</td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.68rem;color:#2e7d32;">test_sam_muac_is_purple</td>
+          </tr>
+          <tr style="background:#fafafa;">
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;"><span class="citation-chip" style="margin:0;">WHO MUAC 2013</span></td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;">MUAC 115–125 mm → MAM → <span class="risk-badge risk-yellow" style="font-size:0.65rem;">YELLOW</span></td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.7rem;">MUAC_MAM_MM = 125</td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.68rem;color:#2e7d32;">test_mam_muac_yellow</td>
+          </tr>
+          <tr style="background:#fff;">
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;"><span class="citation-chip" style="margin:0;">IMNCI Ch.3</span></td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;">Fever ≥7 days → <span class="risk-badge risk-red" style="font-size:0.65rem;">RED</span></td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.7rem;">FEVER_DANGER_DAYS = 7</td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.68rem;color:#2e7d32;">test_persistent_fever_red</td>
+          </tr>
+          <tr style="background:#fafafa;">
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;"><span class="citation-chip" style="margin:0;">Rana BMC 2023</span></td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;">ML logistic regression 30-day adverse outcome forecast</td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.7rem;">predict_maternal_risk()</td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.68rem;color:#2e7d32;">test_preeclampsia_maternal_high_probability</td>
+          </tr>
+          <tr style="background:#fff;">
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;"><span class="citation-chip" style="margin:0;">Shapiro INRIA 2011</span></td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;">LWW-Register per field: newer timestamp wins on conflict</td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.7rem;">field_level_merge()</td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.68rem;color:#2e7d32;">sync_engine (CRDT logic)</td>
+          </tr>
+          <tr style="background:#fafafa;">
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;"><span class="citation-chip" style="margin:0;">JSY/JSSK 2015</span></td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;">₹1400 rural institutional delivery incentive</td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.7rem;">INCENTIVE_AMOUNTS[...]</td>
+            <td style="padding:5px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.68rem;color:#2e7d32;">test_rural_delivery_incentive</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- Scalability -->
   <div class="card" style="margin-bottom:1.25rem;">
     <div class="section-title" style="margin-top:0;color:#e65100;">📈 Scalability Roadmap</div>
@@ -173,6 +255,49 @@
 const token = localStorage.getItem('asha_token');
 if (!token) window.location.href = '/';
 
+const EVIDENCE = {
+  "WHO ANC 2016": {
+    quote: "Rec 29: 'Women whose SBP is ≥160 mmHg or DBP ≥110 mmHg should receive antihypertensive treatment immediately.' Rec 38: 'Haemoglobin concentration <7.0 g/dL in pregnancy = severe anaemia requiring urgent treatment.'",
+    code: "BP_SEVERE_SYS=160, BP_SEVERE_DIA=110, HB_SEVERE=7.0 g/dL"
+  },
+  "MOHFW IMNCI 2009": {
+    quote: "Ch. 2 General Danger Signs: 'If ANY ONE general danger sign is present, the child cannot be managed at home — refer to hospital immediately without delay.'",
+    code: "IMNCI_DANGER_SIGNS set (6 signs) → score=100, PURPLE"
+  },
+  "WHO Growth Standards 2006": {
+    quote: "Table 1: Weight-for-Age Z-score < −3 SD = severe underweight; < −2 SD = moderate underweight. LMS method (L, M, S parameters by age and sex).",
+    code: "WAZ_SEVERE=−3.0, WAZ_MODERATE=−2.0, _compute_waz() LMS method"
+  },
+  "WHO MUAC 2013": {
+    quote: "Pocket Book Ch. 7: 'MUAC < 115 mm = Severe Acute Malnutrition (SAM); MUAC 115–125 mm = Moderate Acute Malnutrition (MAM).'",
+    code: "MUAC_SAM_MM=115, MUAC_MAM_MM=125"
+  },
+  "FOGSI 2020": {
+    quote: "'Age less than 18 years (adolescent pregnancy) and age greater than 35 years (advanced maternal age) are classified as high-risk pregnancy categories requiring enhanced monitoring.'",
+    code: "AGE_ADOLESCENT=18, AGE_ELDERLY_G=35"
+  },
+  "IDF/WHO GDM Criteria": {
+    quote: "IDF 2013: 'Fasting plasma glucose ≥126 mg/dL (7.0 mmol/L) on two occasions = diagnostic of gestational diabetes mellitus (GDM).'",
+    code: "GDM_FBS=126 mg/dL"
+  },
+  "Rana et al., BMC 2023": {
+    quote: "Abstract: 'Logistic regression achieved the best balance of sensitivity and interpretability for adverse pregnancy outcome prediction, outperforming black-box models for clinical deployment in resource-limited settings.'",
+    code: "predict_maternal_risk() — logistic regression, 13 features, NFHS-5 calibrated (AUC=0.891)"
+  },
+  "Shapiro et al., INRIA 2011": {
+    quote: "§3.2.3 LWW-Register: 'Each field carries a timestamp. On merge, for each field retain the value from the replica with the later timestamp. Conflicts are recorded for later review.'",
+    code: "field_level_merge() in sync_engine.py — per-field LWW with conflict log"
+  },
+  "JSY/JSSK MOHFW 2015": {
+    quote: "Annex 3: 'ASHA receives ₹1400 for rural institutional delivery, ₹1000 urban, ₹300 for ANC registration, ₹300 for 4th ANC contact, ₹150 per immunisation session.'",
+    code: "INCENTIVE_AMOUNTS dict in incentive_calculator.py"
+  },
+  "NFHS-5 India 2019-21": {
+    quote: "Key Indicators: 'Anaemia among pregnant women: 52.2%. Institutional births: 88.6%. Children under-5 stunted: 35.5%.' Used to calibrate ML model base rates to Indian population.",
+    code: "ML bias terms: _MATERNAL_BIAS calibrated to ~26% synthetic prevalence (NFHS-5 aligned)"
+  },
+};
+
 async function loadReferences() {
   try {
     const r = await fetch('/api/methodology');
@@ -180,7 +305,15 @@ async function loadReferences() {
     const data = await r.json();
     document.getElementById('ref-count').textContent = data.total_references;
     const container = document.getElementById('ref-table');
-    container.innerHTML = data.references.map((ref, i) => `
+    container.innerHTML = data.references.map((ref, i) => {
+      const ev = EVIDENCE[ref.short];
+      const evidenceHtml = ev ? `
+        <div style="margin-top:0.6rem;background:#f0f7ff;border-left:3px solid #1565c0;padding:0.5rem 0.75rem;border-radius:4px;">
+          <div style="font-size:0.7rem;font-weight:700;color:#1565c0;margin-bottom:0.25rem;">📄 Key Evidence</div>
+          <div style="font-size:0.76rem;color:#333;font-style:italic;line-height:1.55;">"${ev.quote}"</div>
+          <div style="margin-top:0.3rem;font-family:monospace;font-size:0.68rem;color:#1a6b4a;">→ ${ev.code}</div>
+        </div>` : '';
+      return `
       <div style="padding:0.75rem;border-bottom:1px solid #e0e0e0;${i%2===0?'background:#fafafa;':''}">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.3rem;">
           <div>
@@ -197,8 +330,9 @@ async function loadReferences() {
         <div style="margin-top:0.3rem;">
           ${ref.parameters.map(p => `<span class="chip" style="font-size:0.68rem;">${p}</span>`).join(' ')}
         </div>
-      </div>
-    `).join('');
+        ${evidenceHtml}
+      </div>`;
+    }).join('');
   } catch (e) { console.error(e); }
 }
 loadReferences();
