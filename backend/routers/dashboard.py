@@ -23,8 +23,12 @@ async def get_stats(
             and_(Patient.asha_id == current_user.id,
                  Patient.current_risk_level.in_(["red", "purple"]))
         )
-        alerts_q = select(func.count()).where(
-            and_(RiskAlert.acknowledged == False)
+        # Scope alerts to this ASHA's patients only
+        alerts_q = (
+            select(func.count())
+            .join(Patient, RiskAlert.patient_id == Patient.id)
+            .where(and_(RiskAlert.acknowledged == False,
+                        Patient.asha_id == current_user.id))
         )
         incentive_q = select(func.sum(IncentiveEvent.amount)).where(
             and_(IncentiveEvent.asha_id == current_user.id,
@@ -85,13 +89,16 @@ async def get_alerts(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(
+    stmt = (
         select(RiskAlert, Patient.name)
         .join(Patient, RiskAlert.patient_id == Patient.id)
         .where(RiskAlert.acknowledged == False)
         .order_by(RiskAlert.created_at.desc())
         .limit(50)
     )
+    if current_user.role == "asha":
+        stmt = stmt.where(Patient.asha_id == current_user.id)
+    result = await db.execute(stmt)
     rows = result.all()
     return [
         {

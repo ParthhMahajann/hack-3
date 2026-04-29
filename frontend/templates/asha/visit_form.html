@@ -159,6 +159,9 @@
       <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.85rem;min-height:40px;">
         <input type="checkbox" class="danger-sign" value="severe_chest_indrawing" onchange="updateRiskPreview()"> Severe chest in-drawing
       </label>
+      <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.85rem;min-height:40px;">
+        <input type="checkbox" class="danger-sign" value="stridor_calm" onchange="updateRiskPreview()"> Stridor when calm
+      </label>
     </div>
   </div>
   <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.9rem;min-height:44px;">
@@ -263,30 +266,28 @@ function onVisitTypeChange() {
   document.getElementById('delivery-place-wrap').style.display = vt === 'delivery' ? '' : 'none';
 }
 
-// Live risk preview (offline, mirrors Python risk_engine.py)
+// Live risk preview (offline, mirrors Python risk_engine.py exactly)
 function updateRiskPreview() {
   const v = gatherVitals();
   const o = gatherObservations();
-  const fake = { vitals: v, observations: o, patient_type: patientType };
-  const level = window.AshaDB.computeRiskOffline(fake);
+  const input = { vitals: v, observations: o, patient_type: patientType };
+  const { score, level } = window.AshaDB.computeRiskDetailOffline(input);
 
-  const scores = { green: 10, yellow: 45, red: 70, purple: 90 };
-  const score = scores[level] || 0;
-  const icons = { green: '✅', yellow: '⚡', red: '⚠️', purple: '🚨' };
+  const icons   = { green: '✅', yellow: '⚡', red: '⚠️', purple: '🚨' };
   const actions = {
     green:  'Routine follow-up. Next visit as scheduled.',
     yellow: 'Increased monitoring. Inform ANM at next meeting.',
     red:    'Urgent: Alert ANM. Consider facility referral.',
-    purple: 'EMERGENCY: Refer to PHC/CHC NOW.',
+    purple: 'EMERGENCY: Refer to PHC/CHC NOW. Block Officer will be notified.',
   };
 
   const preview = document.getElementById('risk-preview');
   preview.style.display = '';
-  document.getElementById('preview-badge').textContent = `${icons[level]} ${level.toUpperCase()}`;
+  document.getElementById('preview-badge').textContent = `${icons[level] || ''} ${level.toUpperCase()}`;
   document.getElementById('preview-badge').className = `risk-badge risk-${level}`;
   document.getElementById('preview-score').textContent = `${score}/100`;
   const bar = document.getElementById('preview-bar');
-  bar.style.width = `${score}%`;
+  bar.style.width = `${Math.min(score, 100)}%`;
   bar.className = `risk-bar-fill ${level}`;
   document.getElementById('preview-action').textContent = actions[level] || '';
 }

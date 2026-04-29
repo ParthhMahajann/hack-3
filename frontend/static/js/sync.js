@@ -39,6 +39,8 @@ const SyncManager = (() => {
       if (resp.ok) {
         const result = await resp.json();
         localStorage.setItem("last_sync_ts", String(result.server_ts));
+        // Clear the local queue so items aren't resent on next sync
+        await window.AshaDB.clearSyncQueue();
         _showToast(`Synced: ${result.created} new, ${result.updated} updated`);
         _updateSyncBadge("synced");
         _updatePendingCount(0);

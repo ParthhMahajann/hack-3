@@ -141,54 +141,103 @@ async function clearSyncQueueItem(id) {
   return dbDelete("sync_queue", id);
 }
 
-// ── Offline risk computation (mirrors risk_engine.py logic) ─────────────────
-// This is kept in sync manually with the Python backend.
-// It runs instantly in-browser so the ASHA sees the risk level before sync.
+// ── Offline risk computation (mirrors risk_engine.py exactly) ───────────────
+// Weights and thresholds kept identical to backend so risk level is stable
+// before and after sync.  References match risk_engine.py inline citations.
 
 function computeRiskOffline(visit) {
+  const result = _computeRiskDetail(visit);
+  return result.level;
+}
+
+function computeRiskDetailOffline(visit) {
+  return _computeRiskDetail(visit);
+}
+
+function _computeRiskDetail(visit) {
   const v = visit.vitals || {};
   const o = visit.observations || {};
   const patientType = visit.patient_type || "maternal";
-
   if (patientType === "child") return _childRiskOffline(v, o);
   return _maternalRiskOffline(v, o);
 }
 
+// Thresholds must stay in sync with risk_engine.py constants
+const _HB_SEVERE = 7.0, _HB_MODERATE = 10.0;
+const _BP_SEVERE_SYS = 160, _BP_SEVERE_DIA = 110;
+const _BP_PREEC_SYS = 140, _BP_PREEC_DIA = 90;
+const _IMMUN_OVERDUE_DAYS = 28, _IMMUNIZATION_URGENT_DAYS = 60;
+const _FEVER_DANGER_DAYS = 7, _FEVER_TEMP_HIGH = 38.5;
+const _MUAC_SAM = 115, _MUAC_MAM = 125;
+const _GDM_FBS = 126;
+
 function _maternalRiskOffline(v, o) {
   let score = 0;
-  const hb = parseFloat(v.hemoglobin || 12);
-  const sys = parseInt(v.systolic_bp || 110);
-  const dia = parseInt(v.diastolic_bp || 70);
+  const hb  = parseFloat(v.hemoglobin   || 12);
+  const sys = parseInt(v.systolic_bp    || 110);
+  const dia = parseInt(v.diastolic_bp   || 70);
+  const fbs = parseFloat(v.fbs         || 0);
 
-  if (hb < 7)       score += 30;
-  else if (hb < 10) score += 15;
+  // Haemoglobin [WHO ANC Rec 38]
+  if (hb < _HB_SEVERE)    score += 60;
+  else if (hb < _HB_MODERATE) score += 20;
 
-  if (sys >= 160 || dia >= 110) score += 40;
-  else if (sys >= 140 || dia >= 90) score += 25;
+  // Blood pressure [WHO ANC Rec 29]
+  if (sys >= _BP_SEVERE_SYS || dia >= _BP_SEVERE_DIA) score += 80;
+  else if (sys >= _BP_PREEC_SYS || dia >= _BP_PREEC_DIA) score += 35;
 
-  if (o.edema_generalised)   score += 15;
-  if (o.proteinuria_2plus)   score += 15;
+  // Pre-eclampsia signs
+  if (o.edema_generalised)  score += 15;
+  if (o.proteinuria_2plus)  score += 20;
+
+  // Pre-eclampsia triad synergy override [WHO ANC]
+  if ((sys >= _BP_PREEC_SYS || dia >= _BP_PREEC_DIA) &&
+      o.edema_generalised && o.proteinuria_2plus) {
+    score = Math.max(score, 80);
+  }
+
+  // Obstetric history + ANC adherence [FOGSI 2020]
   if (o.previous_complications) score += 15;
   if ((o.missed_anc_visits || 0) >= 2) score += 10;
+  else if ((o.missed_anc_visits || 0) >= 1) score += 5;
 
-  return _classifyScore(score);
+  // Gestational diabetes [IDF/WHO]
+  if (fbs > _GDM_FBS) score += 15;
+
+  return { score, level: _classifyScore(score) };
 }
 
 function _childRiskOffline(v, o) {
-  // IMNCI danger signs → immediate PURPLE
+  // IMNCI General Danger Signs → immediate PURPLE [IMNCI India 2009, Ch 2]
   const dangerSigns = o.danger_signs || [];
-  const imncis = ["not_able_to_drink","vomits_everything","convulsions",
-                  "lethargic_unconscious","severe_chest_indrawing"];
-  if (dangerSigns.some(s => imncis.includes(s))) return "purple";
+  const imncis = ["not_able_to_drink", "vomits_everything", "convulsions",
+                  "lethargic_unconscious", "severe_chest_indrawing", "stridor_calm"];
+  if (dangerSigns.some(s => imncis.includes(s))) {
+    return { score: 100, level: "purple" };
+  }
 
   let score = 0;
-  const muac = parseFloat(v.muac_mm || 999);
-  if (muac < 115)      score += 40;
-  else if (muac < 125) score += 20;
-  if ((o.fever_days || 0) >= 7) score += 20;
-  if ((o.immunisation_overdue_days || 0) >= 60) score += 20;
+  const muac = parseFloat(v.muac_mm || 0);
+  const temp = parseFloat(v.temperature_c || 0);
 
-  return _classifyScore(score);
+  // MUAC [WHO Pocket Book 2013]
+  if (muac > 0) {
+    if (muac < _MUAC_SAM)      score += 40;
+    else if (muac < _MUAC_MAM) score += 20;
+  }
+
+  // Fever [IMNCI Ch 3] — persistent fever >= 7 days = RED minimum
+  if ((o.fever_days || 0) >= _FEVER_DANGER_DAYS) score += 60;
+  else if (temp >= _FEVER_TEMP_HIGH)              score += 10;
+
+  // Breastfeeding (under 6 months)
+  if ((o.age_months || 12) < 6 && o.breastfeeding_ok === false) score += 15;
+
+  // Immunisation overdue [NVHCP schedule]
+  if ((o.immunisation_overdue_days || 0) >= _IMMUNIZATION_URGENT_DAYS) score += 60;
+  else if ((o.immunisation_overdue_days || 0) >= _IMMUN_OVERDUE_DAYS)  score += 15;
+
+  return { score, level: _classifyScore(score) };
 }
 
 function _classifyScore(score) {
@@ -198,9 +247,19 @@ function _classifyScore(score) {
   return "green";
 }
 
+async function clearSyncQueue() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("sync_queue", "readwrite");
+    tx.objectStore("sync_queue").clear().onsuccess = resolve;
+    tx.onerror = reject;
+  });
+}
+
 // Export for use in templates
 window.AshaDB = {
   savePatient, getPatients,
   saveVisit, getVisitsForPatient,
-  getSyncQueue, computeRiskOffline,
+  getSyncQueue, clearSyncQueue,
+  computeRiskOffline, computeRiskDetailOffline,
 };

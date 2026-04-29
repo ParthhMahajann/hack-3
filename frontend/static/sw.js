@@ -16,7 +16,6 @@ const SHELL_ASSETS = [
   "/static/css/app.css",
   "/static/js/db.js",
   "/static/js/sync.js",
-  "/static/js/offline.js",
   "/static/manifest.json",
 ];
 
@@ -187,8 +186,19 @@ async function setLastSyncTs(ts) {
 
 async function mergeServerChanges(changes) {
   if (!changes || !changes.length) return;
-  const db = await openSyncDB();
-  const tx = db.transaction(SYNC_QUEUE_KEY, "readwrite");
-  // Server changes are written to a separate "visits_cache" store
-  // Full merge handled in db.js on the client side
+  // Write server-side visit changes into the main asha-saheli IndexedDB
+  // so the ASHA sees updated data immediately without a page reload.
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open("asha-saheli", 1);
+    req.onsuccess = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains("visits")) { resolve(); return; }
+      const tx = db.transaction("visits", "readwrite");
+      const store = tx.objectStore("visits");
+      for (const record of changes) store.put(record);
+      tx.oncomplete = resolve;
+      tx.onerror = reject;
+    };
+    req.onerror = reject;
+  });
 }

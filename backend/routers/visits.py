@@ -124,9 +124,11 @@ async def log_visit(
         db.add(alert)
 
     # Calculate and persist incentive events
+    # Merge visit_date into observations so the calculator can stamp event_date
+    obs_with_date = {**data.observations, "visit_date": data.visit_date}
     incentive_events = calculate_incentives_from_visit(
         visit_type=data.visit_type,
-        observations=data.observations,
+        observations=obs_with_date,
         patient={"id": patient.id, "name": patient.name},
     )
     for ev in incentive_events:

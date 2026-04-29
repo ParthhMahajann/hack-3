@@ -102,7 +102,8 @@ FEVER_DANGER_DAYS = 7   # days: persistent fever → RED
 FEVER_TEMP_HIGH   = 38.5  # °C  → significant fever in child
 
 # Immunisation overdue threshold (NVHCP schedule)
-IMMUN_OVERDUE_DAYS = 28  # days past due → flag
+IMMUN_OVERDUE_DAYS = 28   # days past due → flag
+IMMUNIZATION_URGENT_DAYS = 60  # >2 months overdue = RED flag
 
 
 # ---------------------------------------------------------------------------
@@ -420,9 +421,6 @@ _WAZ_LMS_GIRLS: dict[int, tuple[float, float, float]] = {
     48: (-0.6165, 15.9689, 0.13195),
     60: (-0.8557, 18.2982, 0.13729),
 }
-
-IMMUNIZATION_URGENT_DAYS = 60  # >2 months overdue = RED flag
-
 
 def _nearest_age_key(age_months: int, lms_table: dict) -> int:
     keys = sorted(lms_table.keys())
